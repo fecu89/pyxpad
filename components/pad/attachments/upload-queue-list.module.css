@@ -1,0 +1,105 @@
+.list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  gap: 7px;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  min-height: 54px;
+  padding: 8px 9px;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-strong, #fff) 94%, transparent);
+}
+
+.icon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--green, #315f44) 10%, transparent);
+  color: var(--green, #315f44);
+}
+
+.copy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.nameRow {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.nameRow strong {
+  min-width: 0;
+  overflow: hidden;
+  flex: 1;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nameRow span {
+  flex: none;
+  color: var(--muted, #737872);
+  font-size: 10px;
+}
+
+.progressTrack {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green, #315f44);
+  transition: width .15s ease;
+}
+
+.error {
+  margin: 0;
+  color: #a14f47;
+  font-size: 10px;
+}
+
+.actions {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.actions button {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted, #737872);
+  cursor: pointer;
+}
+
+.actions button:hover {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.complete {
+  color: var(--green, #315f44);
+}

@@ -1,0 +1,35 @@
+.form {
+  display: grid;
+  gap: 9px;
+}
+
+.form label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted, #737872);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.form textarea {
+  width: 100%;
+  min-height: 58px;
+  resize: vertical;
+}
+
+.form small {
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.form footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.error {
+  margin: 0;
+  color: #a14f47;
+  font-size: 11px;
+}

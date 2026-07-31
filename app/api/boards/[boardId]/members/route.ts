@@ -1,0 +1,134 @@
+import { z } from "zod";
+import {
+  canAssignBoardRole,
+  canManageBoardSettings,
+  getEffectiveBoardAccess,
+  hasSystemPermission,
+  requireActiveUser,
+} from "@/lib/auth/authorization";
+import { createAuditLogData } from "@/lib/auth/audit";
+import { followBoard, recordBoardActivity } from "@/lib/board/activity";
+import { createEmailLookup, maskEmail } from "@/lib/security/pii-crypto";
+import { decryptUserEmail, toPublicAuthorDTO } from "@/lib/users/repository";
+import { apiError, assertSameOrigin } from "@/lib/http";
+import { getPrisma } from "@/lib/prisma";
+import { publishBoardEvent } from "@/lib/realtime/board-events";
+
+const inviteSchema = z.object({
+  email: z.string().trim().email().optional(),
+  userId: z.string().min(1).optional(),
+  role: z.enum(["ADMIN", "EDITOR", "MEMBER", "VIEWER"]).default("MEMBER"),
+}).refine((value) => Boolean(value.email || value.userId), "이메일 또는 사용자를 선택해 주세요.");
+
+function memberDTO(member: {
+  role: "OWNER" | "ADMIN" | "EDITOR" | "MEMBER" | "VIEWER";
+  user: { id: string; emailEncrypted: string; nameEncrypted: string | null; imageEncrypted: string | null };
+}) {
+  return {
+    role: member.role,
+    user: {
+      ...toPublicAuthorDTO(member.user),
+      email: maskEmail(decryptUserEmail(member.user)),
+    },
+  };
+}
+
+// 페이지 로드 시점의 board.members는 미리보기(최대 MEMBER_PREVIEW_LIMIT명)만 담고 있어서
+// (lib/board/queries.ts), 실제 멤버 관리(역할 변경·제거) UI는 설정 패널이 열릴 때 이 API로
+// 전체 목록을 따로 불러옵니다.
+export async function GET(_request: Request, { params }: { params: Promise<{ boardId: string }> }) {
+  try {
+    const current = await requireActiveUser();
+    const { boardId } = await params;
+    const access = await getEffectiveBoardAccess(boardId, current);
+    if (!access || !canManageBoardSettings(current, access)) {
+      return Response.json({ error: "멤버 목록을 볼 권한이 없습니다." }, { status: 403 });
+    }
+    const members = await getPrisma().boardMember.findMany({
+      // 과거 soft-delete 로직이 남긴 관계가 있더라도 관리 화면과 멘션 후보에는 노출하지 않습니다.
+      // 현재 삭제 경로는 같은 트랜잭션에서 BoardMember를 지우지만, 이 조건은 이전 데이터와 직접
+      // DB 변경에 대한 읽기 방어선입니다.
+      where: { boardId, user: { status: { not: "DELETED" } } },
+      orderBy: { joinedAt: "asc" },
+      select: {
+        role: true,
+        user: { select: { id: true, emailEncrypted: true, nameEncrypted: true, imageEncrypted: true } },
+      },
+    });
+    return Response.json({ members: members.map(memberDTO) });
+  } catch (error) {
+    return apiError(error, "멤버 목록을 불러오지 못했습니다.");
+  }
+}
+
+export async function POST(request: Request, { params }: { params: Promise<{ boardId: string }> }) {
+  try {
+    assertSameOrigin(request);
+    const current = await requireActiveUser();
+    const { boardId } = await params;
+    const access = await getEffectiveBoardAccess(boardId, current);
+    if (!access || !canManageBoardSettings(current, access)) {
+      return Response.json({ error: "멤버 관리 권한이 없습니다." }, { status: 403 });
+    }
+    const parsed = inviteSchema.safeParse(await request.json());
+    if (!parsed.success) return Response.json({ error: "이메일과 역할을 확인해 주세요." }, { status: 400 });
+    const canAssignAdmin = access.role === "OWNER"
+      || current.role === "SUPER_ADMIN"
+      || hasSystemPermission(current, "MANAGE_BOARD_SETTINGS");
+    if (parsed.data.role === "ADMIN" && !canAssignAdmin) {
+      return Response.json({ error: "소유자 또는 전역 패드 관리자만 패드 관리자를 지정할 수 있습니다." }, { status: 403 });
+    }
+
+    const prisma = getPrisma();
+    // userId는 같은 학교 후보 검색(members/candidates)에서 고른 경우고, email은 기존처럼
+    // 직접 입력한 경우입니다 — 후보 목록의 이메일은 마스킹돼 있어 그대로 되돌려 조회할 수
+    // 없으므로 userId로 바로 찾습니다.
+    const target = parsed.data.userId
+      ? await prisma.user.findUnique({ where: { id: parsed.data.userId }, select: { id: true, role: true, status: true } })
+      : await prisma.user.findUnique({ where: { emailLookup: createEmailLookup(parsed.data.email!) }, select: { id: true, role: true, status: true } });
+    if (!target || target.status !== "ACTIVE") {
+      return Response.json({ error: "활성 PyxPad 사용자를 찾을 수 없습니다." }, { status: 404 });
+    }
+    if (!canAssignBoardRole(target.role, parsed.data.role)) {
+      return Response.json({ error: "학생은 멤버 또는 읽기 전용 역할만 받을 수 있습니다." }, { status: 400 });
+    }
+    if (target.id === access.board.ownerId) return Response.json({ error: "패드 소유자는 이미 참여 중입니다." }, { status: 400 });
+
+    const globalOverride = !["OWNER", "ADMIN"].includes(access.role ?? "");
+    const member = await prisma.$transaction(async (transaction) => {
+      const membership = await transaction.boardMember.upsert({
+        where: { boardId_userId: { boardId, userId: target.id } },
+        update: { role: parsed.data.role },
+        create: { boardId, userId: target.id, role: parsed.data.role },
+        select: {
+          role: true,
+          user: { select: { id: true, emailEncrypted: true, nameEncrypted: true, imageEncrypted: true } },
+        },
+      });
+      await transaction.boardAccessRequest.updateMany({
+        where: { boardId, userId: target.id, status: "PENDING" },
+        data: { status: "APPROVED" },
+      });
+      if (globalOverride) {
+        await transaction.adminAuditLog.create({
+          data: createAuditLogData({
+            actorId: current.id,
+            targetUserId: target.id,
+            action: "GLOBAL_BOARD_UPDATED",
+            entityType: "BoardMember",
+            entityId: boardId,
+            after: { role: parsed.data.role },
+            reason: "전역 권한으로 패드 멤버 추가",
+          }),
+        });
+      }
+      return membership;
+    });
+    const activityId = await recordBoardActivity({ boardId, actorId: current.id, type: "MEMBER_JOINED", postId: null });
+    publishBoardEvent(boardId, { type: "board.updated", entityId: boardId, actorId: current.id, activityId });
+    await followBoard(boardId, target.id);
+    return Response.json({ member: memberDTO(member) }, { status: 201 });
+  } catch (error) {
+    return apiError(error, "멤버를 초대하지 못했습니다.");
+  }
+}

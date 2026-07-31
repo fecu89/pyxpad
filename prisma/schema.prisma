@@ -1,0 +1,677 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [pg_trgm]
+}
+
+enum BoardDiscoveryScope {
+  PRIVATE
+  LINK
+  PUBLIC
+}
+
+enum BoardVisitorPermission {
+  NO_ACCESS
+  READER
+  COMMENTER
+  WRITER
+}
+
+enum BoardLayout {
+  SECTIONS
+  WALL
+  GRID
+  STREAM
+  TIMELINE
+  TABLE
+}
+
+enum BoardSortMode {
+  MANUAL
+  CREATED_ASC
+  CREATED_DESC
+  TITLE
+  RANDOM
+}
+
+enum NewPostPlacement {
+  START
+  END
+}
+
+enum BoardCardSize {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+enum BoardFont {
+  SANS
+  SERIF
+  MONO
+}
+
+enum ReactionPolicy {
+  SINGLE
+  MULTIPLE
+}
+
+enum AttachmentDownloadPolicy {
+  READERS
+  MEMBERS
+  EDITORS
+  DISABLED
+}
+
+enum BoardMemberRole {
+  OWNER
+  ADMIN
+  EDITOR
+  MEMBER
+  VIEWER
+}
+
+enum BoardAccessRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PostBodyFormat {
+  MARKDOWN
+  PLAIN_TEXT
+}
+
+enum PostStatus {
+  PENDING
+  PUBLISHED
+  REJECTED
+}
+
+enum ModerationMode {
+  NONE
+  MANUAL
+  STUDENTS_ONLY
+}
+
+// ARCHIVED는 별도로 두지 않습니다 — 30일 복구 가능한 보관은 이미 Board.deletedAt이 담당하고 있어서,
+// 여기서는 "동결(임시 잠금)" 여부만 새로 추가된 책임입니다(padupgrade.md 4.3의 deletedAt과 새 상태 책임 분리).
+enum BoardState {
+  ACTIVE
+  FROZEN
+}
+
+enum AttachmentType {
+  IMAGE
+  PDF
+  DOCUMENT
+  VIDEO
+  AUDIO
+  FILE
+  LINK
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum SchoolGroupType {
+  CLASS
+  DEPARTMENT
+}
+
+enum TeacherApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NotificationType {
+  POST_COMMENTED
+  REACTION_ON_POST
+  MEMBER_JOINED
+  ACCESS_REQUEST_RECEIVED
+  ACCESS_REQUEST_APPROVED
+  ACCESS_REQUEST_REJECTED
+  POST_APPROVED
+  POST_REJECTED
+  POST_PENDING_REVIEW
+  COMMENT_MENTIONED
+  TEACHER_APPROVAL_REQUESTED
+  TEACHER_APPROVAL_APPROVED
+  TEACHER_APPROVAL_REJECTED
+}
+
+enum BoardActivityType {
+  POST_CREATED
+  POST_UPDATED
+  POST_DELETED
+  COMMENT_CREATED
+  MEMBER_JOINED
+  ACCESS_REQUEST_DECIDED
+  POST_MODERATED
+}
+
+enum SystemPermission {
+  VIEW_USERS
+  CHANGE_NON_ADMIN_ROLES
+  SUSPEND_USERS
+  REVOKE_USER_SESSIONS
+  VIEW_ALL_BOARDS
+  EDIT_ANY_CONTENT
+  MODERATE_CONTENT
+  CREATE_CONTENT_ANYWHERE
+  MANAGE_BOARD_SETTINGS
+  TRANSFER_BOARD_OWNERSHIP
+  VIEW_USER_PII
+  VIEW_AUDIT_LOG
+}
+
+enum AdminAuditAction {
+  USER_ROLE_CHANGED
+  USER_STATUS_CHANGED
+  USER_ORGANIZATION_CHANGED
+  USER_DELETED
+  USER_SESSIONS_REVOKED
+  ADMIN_PERMISSION_GRANTED
+  ADMIN_PERMISSION_REVOKED
+  USER_PII_VIEWED
+  GLOBAL_POST_CREATED
+  GLOBAL_POST_UPDATED
+  GLOBAL_POST_HIDDEN
+  GLOBAL_POST_RESTORED
+  GLOBAL_BOARD_UPDATED
+  BOARD_OWNERSHIP_TRANSFERRED
+  GLOBAL_BOARD_ARCHIVED
+  GLOBAL_BOARD_RESTORED
+  GLOBAL_ENTITY_PURGED
+  SCHOOL_CREATED
+  SCHOOL_UPDATED
+  SCHOOL_DELETED
+  SCHOOL_GROUP_CREATED
+  SCHOOL_GROUP_UPDATED
+  SCHOOL_GROUP_DELETED
+  SCHOOL_REPRESENTATIVE_GRANTED
+  SCHOOL_REPRESENTATIVE_REVOKED
+  TEACHER_APPROVAL_APPROVED
+  TEACHER_APPROVAL_REJECTED
+}
+
+model User {
+  id                     String     @id @default(cuid())
+  emailEncrypted         String
+  emailLookup            String     @unique
+  nameEncrypted          String?
+  imageEncrypted         String?
+  role                   UserRole   @default(STUDENT)
+  status                 UserStatus @default(ACTIVE)
+  authVersion            Int        @default(1)
+  schoolId               String?
+  schoolGroupId          String?
+  // TEACHER 역할에서만 의미가 있습니다. 이 학교(schoolId) 안에서 학생·교사 반/부서 배치와
+  // 반/부서 생성·수정·삭제를 할 수 있는 "학교 대표교사"인지. SUPER_ADMIN만 부여·회수합니다.
+  isSchoolRepresentative Boolean    @default(false)
+  // 새 카카오 이메일로 처음 가입한 사용자는 프로필·학교·반/부서를 직접 고른 뒤 이 시각이
+  // 채워집니다. null인 동안 proxy.ts가 온보딩 외 화면과 수정 API 접근을 막습니다.
+  onboardingCompletedAt  DateTime?
+  lastLoginAt            DateTime?
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
+
+  ownedBoards             Board[]                  @relation("BoardOwner")
+  memberships             BoardMember[]
+  posts                   Post[]
+  comments                Comment[]
+  reactions               Reaction[]
+  attachments             Attachment[]
+  accessRequests          BoardAccessRequest[]
+  systemPermissions       UserSystemPermission[]   @relation("PermissionUser")
+  grantedPermissions      UserSystemPermission[]   @relation("PermissionGrantor")
+  auditActions            AdminAuditLog[]          @relation("AuditActor")
+  targetedAuditActions    AdminAuditLog[]          @relation("AuditTarget")
+  notifications           Notification[]           @relation("NotificationUser")
+  triggeredNotifications  Notification[]           @relation("NotificationActor")
+  createdInviteLinks      BoardInviteLink[]
+  boardActivities         BoardActivity[]          @relation("BoardActivityActor")
+  boardFollows            BoardFollow[]
+  boardVisits             BoardVisit[]
+  boardFavorites          BoardFavorite[]
+  dashboardFolders        DashboardFolder[]
+  commentMentions         CommentMention[]
+  teacherApprovalRequest  TeacherApprovalRequest?  @relation("TeacherApprovalApplicant")
+  reviewedTeacherRequests TeacherApprovalRequest[] @relation("TeacherApprovalReviewer")
+  school                  School?                  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  schoolGroup             SchoolGroup?             @relation(fields: [schoolGroupId], references: [id], onDelete: SetNull)
+
+  @@index([schoolId, role, status])
+  @@index([schoolGroupId, role, status])
+  @@index([role, status, createdAt])
+}
+
+model School {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  groups                  SchoolGroup[]
+  users                   User[]
+  teacherApprovalRequests TeacherApprovalRequest[]
+}
+
+model SchoolGroup {
+  id        String          @id @default(cuid())
+  schoolId  String
+  name      String
+  type      SchoolGroupType
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  school                  School                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  users                   User[]
+  teacherApprovalRequests TeacherApprovalRequest[]
+
+  @@unique([schoolId, type, name])
+  @@index([schoolId, type, name])
+}
+
+model TeacherApprovalRequest {
+  id            String                @id @default(cuid())
+  userId        String                @unique
+  schoolId      String
+  schoolGroupId String
+  status        TeacherApprovalStatus @default(PENDING)
+  reviewReason  String?
+  reviewedById  String?
+  requestedAt   DateTime              @default(now())
+  reviewedAt    DateTime?
+  updatedAt     DateTime              @updatedAt
+
+  user        User        @relation("TeacherApprovalApplicant", fields: [userId], references: [id], onDelete: Cascade)
+  school      School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schoolGroup SchoolGroup @relation(fields: [schoolGroupId], references: [id], onDelete: Cascade)
+  reviewedBy  User?       @relation("TeacherApprovalReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([schoolId, status, requestedAt])
+  @@index([status, requestedAt])
+  @@index([reviewedById])
+}
+
+model BoardActivity {
+  id        String            @id @default(cuid())
+  boardId   String
+  actorId   String?
+  type      BoardActivityType
+  postId    String?
+  commentId String?
+  createdAt DateTime          @default(now())
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  actor User? @relation("BoardActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([boardId, createdAt])
+}
+
+model BoardFollow {
+  boardId    String
+  userId     String
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([boardId, userId])
+  @@index([userId])
+}
+
+model BoardVisit {
+  boardId       String
+  userId        String
+  lastVisitedAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([boardId, userId])
+  @@index([userId, lastVisitedAt])
+}
+
+model BoardFavorite {
+  boardId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([boardId, userId])
+  @@index([userId, createdAt])
+}
+
+model DashboardFolder {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  nameKey   String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  boards DashboardFolderBoard[]
+
+  @@unique([userId, nameKey])
+  @@index([userId, position, createdAt])
+}
+
+model DashboardFolderBoard {
+  folderId  String
+  boardId   String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  folder DashboardFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  board  Board           @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@id([folderId, boardId])
+  @@index([boardId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  actorId   String?
+  type      NotificationType
+  boardId   String?
+  postId    String?
+  commentId String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user  User  @relation("NotificationUser", fields: [userId], references: [id], onDelete: Cascade)
+  actor User? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([userId, readAt, createdAt])
+}
+
+model UserSystemPermission {
+  userId      String
+  permission  SystemPermission
+  grantedById String
+  createdAt   DateTime         @default(now())
+
+  user      User @relation("PermissionUser", fields: [userId], references: [id], onDelete: Cascade)
+  grantedBy User @relation("PermissionGrantor", fields: [grantedById], references: [id], onDelete: Restrict)
+
+  @@id([userId, permission])
+  @@index([grantedById])
+}
+
+model AdminAuditLog {
+  id           String           @id @default(cuid())
+  actorId      String
+  targetUserId String?
+  action       AdminAuditAction
+  entityType   String?
+  entityId     String?
+  before       Json?
+  after        Json?
+  reason       String?
+  createdAt    DateTime         @default(now())
+
+  actor      User  @relation("AuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+  targetUser User? @relation("AuditTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([targetUserId, createdAt])
+  @@index([action, createdAt])
+  @@index([createdAt])
+}
+
+model Board {
+  id                       String                   @id @default(cuid())
+  slug                     String                   @unique
+  title                    String
+  description              String?
+  ownerId                  String
+  layout                   BoardLayout              @default(SECTIONS)
+  sortMode                 BoardSortMode            @default(MANUAL)
+  newPostPlacement         NewPostPlacement         @default(END)
+  cardSize                 BoardCardSize            @default(MEDIUM)
+  font                     BoardFont                @default(SANS)
+  backgroundColor          String?
+  backgroundImageUrl       String?
+  accentColor              String?
+  showAuthor               Boolean                  @default(true)
+  showTimestamp            Boolean                  @default(true)
+  reactionPolicy           ReactionPolicy           @default(SINGLE)
+  attachmentDownloadPolicy AttachmentDownloadPolicy @default(READERS)
+  postFieldConfig          Json?
+  discoveryScope           BoardDiscoveryScope      @default(PRIVATE)
+  visitorPermission        BoardVisitorPermission   @default(NO_ACCESS)
+  loginRequired            Boolean                  @default(true)
+  passwordHash             String?
+  state                    BoardState               @default(ACTIVE)
+  moderationMode           ModerationMode           @default(NONE)
+  freezeAt                 DateTime?
+  isTemplate               Boolean                  @default(false)
+  allowComments            Boolean                  @default(true)
+  allowReactions           Boolean                  @default(true)
+  allowMemberPosting       Boolean                  @default(true)
+  allowMemberFileUpload    Boolean                  @default(true)
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  deletedAt                DateTime?
+
+  owner          User                   @relation("BoardOwner", fields: [ownerId], references: [id])
+  members        BoardMember[]
+  accessRequests BoardAccessRequest[]
+  sections       Section[]
+  posts          Post[]
+  inviteLinks    BoardInviteLink[]
+  activities     BoardActivity[]
+  follows        BoardFollow[]
+  visits         BoardVisit[]
+  favorites      BoardFavorite[]
+  folderItems    DashboardFolderBoard[]
+
+  @@index([ownerId])
+  @@index([discoveryScope])
+  @@index([deletedAt])
+  @@index([isTemplate, discoveryScope, updatedAt])
+}
+
+model BoardInviteLink {
+  id          String          @id @default(cuid())
+  boardId     String
+  tokenHash   String          @unique
+  role        BoardMemberRole @default(MEMBER)
+  createdById String
+  expiresAt   DateTime?
+  maxUses     Int?
+  useCount    Int             @default(0)
+  revokedAt   DateTime?
+  createdAt   DateTime        @default(now())
+
+  board     Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  createdBy User  @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([boardId])
+}
+
+model BoardMember {
+  boardId  String
+  userId   String
+  role     BoardMemberRole @default(MEMBER)
+  joinedAt DateTime        @default(now())
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([boardId, userId])
+  @@index([userId])
+}
+
+model BoardAccessRequest {
+  id        String                   @id @default(cuid())
+  boardId   String
+  userId    String
+  status    BoardAccessRequestStatus @default(PENDING)
+  createdAt DateTime                 @default(now())
+  updatedAt DateTime                 @updatedAt
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, userId])
+  @@index([boardId, status, updatedAt])
+  @@index([userId, status])
+}
+
+model Section {
+  id          String    @id @default(cuid())
+  boardId     String
+  title       String
+  description String?
+  position    Int
+  version     Int       @default(1)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  board Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  posts Post[]
+
+  @@index([boardId, position])
+  @@index([deletedAt])
+}
+
+model Post {
+  id                String         @id @default(cuid())
+  boardId           String
+  sectionId         String?
+  authorId          String
+  title             String?
+  body              String         @default("")
+  bodyFormat        PostBodyFormat @default(MARKDOWN)
+  status            PostStatus     @default(PUBLISHED)
+  moderationReason  String?
+  customFieldValues Json?
+  position          Int
+  isPinned          Boolean        @default(false)
+  version           Int            @default(1)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  deletedAt         DateTime?
+
+  board       Board        @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  section     Section?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  author      User         @relation(fields: [authorId], references: [id])
+  attachments Attachment[]
+  comments    Comment[]
+  reactions   Reaction[]
+
+  @@index([boardId, sectionId, position])
+  @@index([authorId])
+  @@index([deletedAt])
+  @@index([boardId, status])
+  // 보드 내부 검색(app/api/boards/[boardId]/search)의 ILIKE(contains) 검색을 받쳐주는
+  // 트라이그램 GIN 인덱스. pg_trgm 확장이 필요합니다.
+  @@index([title(ops: raw("gin_trgm_ops"))], map: "Post_title_trgm_idx", type: Gin)
+  @@index([body(ops: raw("gin_trgm_ops"))], map: "Post_body_trgm_idx", type: Gin)
+}
+
+model Attachment {
+  id              String         @id @default(cuid())
+  postId          String
+  commentId       String?
+  uploaderId      String
+  type            AttachmentType
+  originalName    String
+  storedName      String?        @unique
+  storagePath     String?
+  mimeType        String
+  fileSize        Int
+  width           Int?
+  height          Int?
+  altText         String?
+  caption         String?
+  externalUrl     String?
+  previewImageUrl String?
+  thumbnailPath   String?
+  sortOrder       Int            @default(0)
+  createdAt       DateTime       @default(now())
+  deletedAt       DateTime?
+
+  post     Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment  Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  uploader User     @relation(fields: [uploaderId], references: [id])
+
+  @@index([postId, sortOrder])
+  @@index([commentId, sortOrder])
+  @@index([uploaderId])
+  @@index([deletedAt])
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  postId    String
+  authorId  String
+  parentId  String?
+  body      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  post        Post             @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author      User             @relation(fields: [authorId], references: [id])
+  parent      Comment?         @relation("CommentReplies", fields: [parentId], references: [id])
+  replies     Comment[]        @relation("CommentReplies")
+  attachments Attachment[]
+  mentions    CommentMention[]
+
+  @@index([postId, createdAt])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+model CommentMention {
+  commentId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([commentId, userId])
+  @@index([userId, createdAt])
+}
+
+model Reaction {
+  postId    String
+  userId    String
+  key       String   @default("LIKE")
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId, key])
+  @@index([userId])
+}

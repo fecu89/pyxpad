@@ -1,0 +1,73 @@
+.root {
+  display: grid;
+  gap: 10px;
+}
+
+.modeButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.modeButtons button {
+  display: inline-flex;
+  min-height: 34px;
+  padding: 0 10px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 9px;
+  background: var(--surface-strong, #fff);
+  color: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.modeButtons button[data-active="true"] {
+  border-color: var(--green, #315f44);
+  background: color-mix(in srgb, var(--green, #315f44) 10%, transparent);
+  color: var(--green, #315f44);
+}
+
+.preview {
+  display: grid;
+  min-height: 210px;
+  overflow: hidden;
+  place-items: center;
+  border-radius: 13px;
+  background: #121512;
+  color: white;
+}
+
+.preview video {
+  display: block;
+  width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+}
+
+.audioState {
+  display: flex;
+  min-height: 210px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.recording {
+  color: #ff8d83;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.error {
+  margin: 0;
+  color: #a14f47;
+  font-size: 11px;
+}
