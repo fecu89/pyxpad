@@ -2,6 +2,7 @@ import { canModeratePosts, canReadEffectiveBoard, getEffectiveBoardAccess } from
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { apiError } from "@/lib/http";
 import { getPrisma } from "@/lib/prisma";
+import { assertRateLimit } from "@/lib/security/rate-limit";
 import { parseReactionKey } from "@/lib/reactions/validation";
 import type { ReactionCounts, ReactionKey } from "@/lib/reactions/types";
 import { toPublicAuthorDTO } from "@/lib/users/repository";
@@ -30,11 +31,22 @@ function reactionSummary(reactions: { key: string; userId: string }[], currentUs
 export async function GET(request: Request, { params }: { params: Promise<{ boardId: string }> }) {
   try {
     const { boardId } = await params;
-    const term = (new URL(request.url).searchParams.get("q") ?? "").trim();
+    // 검색어 길이를 제한하지 않으면 수십 KB짜리 문자열이 그대로 ILIKE '%...%'로 들어가
+    // trigram 인덱스를 무력화한 채 순차 스캔을 유발할 수 있습니다.
+    const term = (new URL(request.url).searchParams.get("q") ?? "").trim().slice(0, 100);
     if (!term) return Response.json({ posts: [] });
     const currentUser = await getCurrentUser();
     const access = await getEffectiveBoardAccess(boardId, currentUser);
     if (!access || !canReadEffectiveBoard(currentUser, access)) return Response.json({ error: "검색할 권한이 없습니다." }, { status: 403 });
+    // 요청 한 건이 게시물 50개 + 첨부 + 반응을 모두 조회하고 공개 보드는 비로그인도 부를 수
+    // 있으므로, 타이핑에 따른 정상 연속 검색은 통과하되 스크립트 반복은 막는 선을 둡니다.
+    assertRateLimit(request, {
+      scope: "board-search",
+      userId: currentUser?.id ?? null,
+      windowMs: 60_000,
+      maxAttempts: 60,
+      message: "검색을 너무 자주 요청했습니다. 잠시 후 다시 시도해 주세요.",
+    });
     const canManage = Boolean(currentUser && canModeratePosts(currentUser, access));
     const posts = await getPrisma().post.findMany({
       where: {

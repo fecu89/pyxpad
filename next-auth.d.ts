@@ -6,6 +6,7 @@ declare module "next-auth" {
       id?: string;
       onboardingCompleted?: boolean;
       onboardingState?: "PROFILE" | "TEACHER_PENDING" | "COMPLETE";
+      passwordChangeRequired?: boolean;
     } & DefaultSession["user"];
   }
 }
@@ -17,5 +18,6 @@ declare module "next-auth/jwt" {
     sessionInvalid?: boolean;
     onboardingCompleted?: boolean;
     onboardingState?: "PROFILE" | "TEACHER_PENDING" | "COMPLETE";
+    passwordChangeRequired?: boolean;
   }
 }

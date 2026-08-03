@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SystemPermission, UserRole, UserStatus } from "@/generated/prisma/client";
-import { decryptOptionalUserPii, decryptUserPii, maskEmail } from "@/lib/security/pii-crypto";
+import { decryptOptionalUserPii, decryptUserLoginIdentifier as decryptStoredLoginIdentifier, maskLoginIdentifier } from "@/lib/security/pii-crypto";
 import { getPrisma } from "@/lib/prisma";
 
 export type PublicAuthorDTO = {
@@ -11,10 +11,16 @@ export type PublicAuthorDTO = {
 };
 
 export type PrivateUserDTO = PublicAuthorDTO & {
-  email: string;
+  loginIdentifier: string;
+  loginType: "LOGIN_ID" | "KAKAO_EMAIL";
+  loginId: string | null;
+  email: string | null;
   role: UserRole;
   status: UserStatus;
   authVersion: number;
+  hasPasswordCredential: boolean;
+  mustChangePassword: boolean;
+  studentNumber: number | null;
   onboardingCompletedAt: Date | null;
   lastLoginAt: Date | null;
   systemPermissions: SystemPermission[];
@@ -26,10 +32,14 @@ export type PrivateUserDTO = PublicAuthorDTO & {
 export type AdminUserDTO = {
   id: string;
   name: string | null;
-  maskedEmail: string;
+  maskedLoginIdentifier: string;
+  loginType: "LOGIN_ID" | "KAKAO_EMAIL";
   role: UserRole;
   status: UserStatus;
   authVersion: number;
+  hasPasswordCredential: boolean;
+  mustChangePassword: boolean;
+  studentNumber: number | null;
   lastLoginAt: string | null;
   createdAt: string;
   ownedBoardCount: number;
@@ -45,7 +55,7 @@ export type AdminUserListFilters = {
   pageSize: number;
   role?: UserRole;
   status?: UserStatus;
-  emailLookup?: string;
+  loginIdentifierLookup?: string;
   schoolId?: string;
   schoolGroupId?: string;
 };
@@ -64,19 +74,22 @@ export function toPublicAuthorDTO(user: EncryptedPublicUser): PublicAuthorDTO {
   };
 }
 
-export function decryptUserEmail(user: { id: string; emailEncrypted: string | null }) {
-  if (!user.emailEncrypted) throw new Error("사용자 이메일 암호화 데이터가 준비되지 않았습니다.");
-  return decryptUserPii(user.id, "email", user.emailEncrypted);
+export function decryptUserLoginIdentifier(user: { id: string; loginIdentifierEncrypted: string | null }) {
+  if (!user.loginIdentifierEncrypted) throw new Error("사용자 로그인 식별자 암호화 데이터가 준비되지 않았습니다.");
+  return decryptStoredLoginIdentifier(user.id, user.loginIdentifierEncrypted);
 }
 
 export function toPrivateUserDTO(user: {
   id: string;
-  emailEncrypted: string | null;
+  loginIdentifierEncrypted: string | null;
   nameEncrypted: string | null;
   imageEncrypted: string | null;
   role: UserRole;
   status: UserStatus;
   authVersion: number;
+  passwordHash: string | null;
+  mustChangePassword: boolean;
+  studentNumber: number | null;
   onboardingCompletedAt: Date | null;
   lastLoginAt: Date | null;
   systemPermissions: { permission: SystemPermission }[];
@@ -84,12 +97,20 @@ export function toPrivateUserDTO(user: {
   schoolGroup: { id: string; name: string; type: "CLASS" | "DEPARTMENT" } | null;
   isSchoolRepresentative: boolean;
 }): PrivateUserDTO {
+  const loginIdentifier = decryptUserLoginIdentifier(user);
+  const hasPasswordCredential = Boolean(user.passwordHash);
   return {
     ...toPublicAuthorDTO(user),
-    email: decryptUserEmail(user),
+    loginIdentifier,
+    loginType: hasPasswordCredential ? "LOGIN_ID" : "KAKAO_EMAIL",
+    loginId: hasPasswordCredential ? loginIdentifier : null,
+    email: hasPasswordCredential ? null : loginIdentifier,
     role: user.role,
     status: user.status,
     authVersion: user.authVersion,
+    hasPasswordCredential,
+    mustChangePassword: user.mustChangePassword,
+    studentNumber: user.studentNumber,
     onboardingCompletedAt: user.onboardingCompletedAt,
     lastLoginAt: user.lastLoginAt,
     systemPermissions: user.systemPermissions.map(({ permission }) => permission),
@@ -104,12 +125,15 @@ export async function getPrivateUserDTO(userId: string) {
     where: { id: userId },
     select: {
       id: true,
-      emailEncrypted: true,
+      loginIdentifierEncrypted: true,
       nameEncrypted: true,
       imageEncrypted: true,
       role: true,
       status: true,
       authVersion: true,
+      passwordHash: true,
+      mustChangePassword: true,
+      studentNumber: true,
       onboardingCompletedAt: true,
       lastLoginAt: true,
       systemPermissions: { select: { permission: true } },
@@ -123,11 +147,14 @@ export async function getPrivateUserDTO(userId: string) {
 
 export function toAdminUserDTO(user: {
   id: string;
-  emailEncrypted: string | null;
+  loginIdentifierEncrypted: string | null;
   nameEncrypted: string | null;
   role: UserRole;
   status: UserStatus;
   authVersion: number;
+  passwordHash: string | null;
+  mustChangePassword: boolean;
+  studentNumber: number | null;
   lastLoginAt: Date | null;
   createdAt: Date;
   systemPermissions: { permission: SystemPermission }[];
@@ -136,14 +163,19 @@ export function toAdminUserDTO(user: {
   schoolGroup: { id: string; name: string; type: "CLASS" | "DEPARTMENT" } | null;
   isSchoolRepresentative: boolean;
 }): AdminUserDTO {
-  const email = decryptUserEmail(user);
+  const loginIdentifier = decryptUserLoginIdentifier(user);
+  const hasPasswordCredential = Boolean(user.passwordHash);
   return {
     id: user.id,
     name: decryptOptionalUserPii(user.id, "name", user.nameEncrypted),
-    maskedEmail: maskEmail(email),
+    maskedLoginIdentifier: maskLoginIdentifier(loginIdentifier),
+    loginType: hasPasswordCredential ? "LOGIN_ID" : "KAKAO_EMAIL",
     role: user.role,
     status: user.status,
     authVersion: user.authVersion,
+    hasPasswordCredential,
+    mustChangePassword: user.mustChangePassword,
+    studentNumber: user.studentNumber,
     lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
     createdAt: user.createdAt.toISOString(),
     ownedBoardCount: user._count.ownedBoards,
@@ -159,10 +191,14 @@ export async function getAdminUserPage(filters: AdminUserListFilters) {
   const where = {
     ...(filters.role ? { role: filters.role } : {}),
     ...(filters.status ? { status: filters.status } : {}),
-    ...(filters.emailLookup ? { emailLookup: filters.emailLookup } : {}),
+    ...(filters.loginIdentifierLookup ? { loginIdentifierLookup: filters.loginIdentifierLookup } : {}),
     ...(filters.schoolId ? { schoolId: filters.schoolId } : {}),
     ...(filters.schoolGroupId ? { schoolGroupId: filters.schoolGroupId } : {}),
     ...(!filters.status ? { status: { not: "DELETED" as const } } : {}),
+    // 교사 가입 승인 대기 중인 지원자는 아직 학교·역할이 정해지지 않은 임시 상태라 여기서는
+    // 숨기고, 승인 전까지는 `교사 가입 요청` 대기열에서만 보이게 합니다(승인·반려 후에는
+    // role/status가 확정되므로 다시 이 목록에 나타납니다).
+    NOT: { teacherApprovalRequest: { status: "PENDING" as const } },
   };
   const prisma = getPrisma();
   const [totalCount, users] = await Promise.all([
@@ -174,11 +210,14 @@ export async function getAdminUserPage(filters: AdminUserListFilters) {
       take: filters.pageSize,
       select: {
         id: true,
-        emailEncrypted: true,
+        loginIdentifierEncrypted: true,
         nameEncrypted: true,
         role: true,
         status: true,
         authVersion: true,
+        passwordHash: true,
+        mustChangePassword: true,
+        studentNumber: true,
         lastLoginAt: true,
         createdAt: true,
         systemPermissions: { select: { permission: true }, orderBy: { permission: "asc" } },

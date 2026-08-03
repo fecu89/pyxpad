@@ -189,6 +189,24 @@ export const SchoolGroupType = {
 export type SchoolGroupType = (typeof SchoolGroupType)[keyof typeof SchoolGroupType]
 
 
+export const SchoolLevel = {
+  ELEMENTARY: 'ELEMENTARY',
+  MIDDLE: 'MIDDLE',
+  HIGH: 'HIGH'
+} as const
+
+export type SchoolLevel = (typeof SchoolLevel)[keyof typeof SchoolLevel]
+
+
+export const SchoolOperatingStatus = {
+  OPERATING: 'OPERATING',
+  PLANNED: 'PLANNED',
+  INACTIVE: 'INACTIVE'
+} as const
+
+export type SchoolOperatingStatus = (typeof SchoolOperatingStatus)[keyof typeof SchoolOperatingStatus]
+
+
 export const TeacherApprovalStatus = {
   PENDING: 'PENDING',
   APPROVED: 'APPROVED',
@@ -196,6 +214,18 @@ export const TeacherApprovalStatus = {
 } as const
 
 export type TeacherApprovalStatus = (typeof TeacherApprovalStatus)[keyof typeof TeacherApprovalStatus]
+
+
+export const AuthSecurityEventType = {
+  LOGIN_SUCCESS: 'LOGIN_SUCCESS',
+  LOGIN_FAILURE: 'LOGIN_FAILURE',
+  LOGIN_RATE_LIMITED: 'LOGIN_RATE_LIMITED',
+  REGISTER_SUCCESS: 'REGISTER_SUCCESS',
+  REGISTER_REJECTED: 'REGISTER_REJECTED',
+  REGISTER_RATE_LIMITED: 'REGISTER_RATE_LIMITED'
+} as const
+
+export type AuthSecurityEventType = (typeof AuthSecurityEventType)[keyof typeof AuthSecurityEventType]
 
 
 export const NotificationType = {
@@ -274,8 +304,13 @@ export const AdminAuditAction = {
   SCHOOL_GROUP_DELETED: 'SCHOOL_GROUP_DELETED',
   SCHOOL_REPRESENTATIVE_GRANTED: 'SCHOOL_REPRESENTATIVE_GRANTED',
   SCHOOL_REPRESENTATIVE_REVOKED: 'SCHOOL_REPRESENTATIVE_REVOKED',
+  STUDENT_ACADEMIC_STATUS_CHANGED: 'STUDENT_ACADEMIC_STATUS_CHANGED',
+  STUDENTS_CLASS_MOVED: 'STUDENTS_CLASS_MOVED',
+  ACADEMIC_YEAR_PROMOTED: 'ACADEMIC_YEAR_PROMOTED',
   TEACHER_APPROVAL_APPROVED: 'TEACHER_APPROVAL_APPROVED',
-  TEACHER_APPROVAL_REJECTED: 'TEACHER_APPROVAL_REJECTED'
+  TEACHER_APPROVAL_REJECTED: 'TEACHER_APPROVAL_REJECTED',
+  STUDENT_ROSTER_IMPORTED: 'STUDENT_ROSTER_IMPORTED',
+  USER_PASSWORD_RESET: 'USER_PASSWORD_RESET'
 } as const
 
 export type AdminAuditAction = (typeof AdminAuditAction)[keyof typeof AdminAuditAction]

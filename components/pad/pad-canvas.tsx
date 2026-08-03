@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Activity, Archive, ArchiveRestore, Check, ChevronLeft, Download, Globe2, LayoutGrid, LoaderCircle, LockKeyhole, Plus, Search, Settings2, Share2, Snowflake, Sparkles, Star, Wifi, WifiOff } from "lucide-react";
+import { Activity, Archive, ArchiveRestore, Check, ChevronLeft, Download, Globe2, LayoutGrid, LoaderCircle, LockKeyhole, Plus, Search, Settings2, Share2, Snowflake, Sparkles, Star, Wifi, WifiOff, X } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { Logo } from "@/components/ui/logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -147,6 +147,8 @@ export function PadCanvas({ initialData, currentUserId }: { initialData: PadInit
   const skipNextAutosave = useRef(true);
   const [quickSectionId, setQuickSectionId] = useState(board.sections[0]?.id ?? "");
   const [quickComposerOpen, setQuickComposerOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileSectionPickerOpen, setMobileSectionPickerOpen] = useState(false);
   // 담벼락 디자인의 "전체/섹션명" 필 내비게이션이 지금 어떤 섹션을 가리키는지. 실제로 카드를
   // 걸러내지는 않고(섹션은 이미 전부 나란히 보임) 가로 스크롤 위치를 옮기는 용도라 서버로
   // 보내지 않는 순수 UI 상태입니다. null이면 "전체".
@@ -176,11 +178,12 @@ export function PadCanvas({ initialData, currentUserId }: { initialData: PadInit
     const items: PadMoreMenuItem[] = [];
     if (currentUserId) items.push({ key: "activity", label: "패드 활동 기록", icon: <Activity size={16} />, onClick: () => setActivityOpen(true) });
     if (currentUserId) items.push({ key: "favorite", label: favorite ? "즐겨찾기 해제" : "즐겨찾기 추가", icon: <Star size={16} fill={favorite ? "currentColor" : "none"} />, onClick: toggleFavorite });
+    if (canManage) items.push({ key: "add-section", label: "새 섹션 만들기", icon: <Plus size={16} />, onClick: () => setAddSectionOpen(true) });
     if (capabilities.viewTrash) items.push({ key: "trash", label: "삭제한 항목", icon: <ArchiveRestore size={16} />, onClick: () => setTrashOpen(true) });
     items.push({ key: "export", label: "내보내기·발표", icon: <Download size={16} />, onClick: () => setExportOpen(true) });
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUserId, favorite, capabilities.viewTrash]);
+  }, [currentUserId, favorite, canManage, capabilities.viewTrash]);
 
   useEffect(() => {
     if (!currentUserId) return;
@@ -249,6 +252,33 @@ export function PadCanvas({ initialData, currentUserId }: { initialData: PadInit
   }
 
   const filteredSections = searchResults ? searchResults.sections : sections;
+
+  const selectVisibleSection = useCallback((sectionId: string) => {
+    setActiveSectionPill(sectionId);
+    setQuickSectionId(sectionId);
+  }, []);
+
+  function closeMobileSearch() {
+    setMobileSearchOpen(false);
+    setQuery("");
+  }
+
+  function openMobilePostComposer() {
+    setMobileSearchOpen(false);
+    setQuery("");
+    if (board.layout !== "SECTIONS" && sections.length > 1) {
+      setMobileSectionPickerOpen((open) => !open);
+      return;
+    }
+    setMobileSectionPickerOpen(false);
+    setQuickComposerOpen(true);
+  }
+
+  function chooseMobileSection(sectionId: string) {
+    setQuickSectionId(sectionId);
+    setMobileSectionPickerOpen(false);
+    setQuickComposerOpen(true);
+  }
 
   async function addSection(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -379,10 +409,13 @@ export function PadCanvas({ initialData, currentUserId }: { initialData: PadInit
   ]);
 
   async function inviteMember() {
-    const email = window.prompt("초대할 멤버의 PyxPad 이메일을 입력해 주세요.", "student@pyxpad.demo");
-    if (!email) return;
+    const loginIdentifier = window.prompt("초대할 멤버의 PyxPad 아이디 또는 카카오 이메일을 입력해 주세요.", "ch30106");
+    if (!loginIdentifier) return;
     try {
-      await requestJson(`/api/boards/${board.id}/members`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, role: "MEMBER" }) });
+      const identityField = loginIdentifier.includes("@")
+        ? { email: loginIdentifier }
+        : { loginId: loginIdentifier };
+      await requestJson(`/api/boards/${board.id}/members`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...identityField, role: "MEMBER" }) });
     } catch (reason) {
       return setError(reason instanceof Error ? reason.message : "멤버를 초대하지 못했습니다.");
     }
@@ -429,7 +462,7 @@ export function PadCanvas({ initialData, currentUserId }: { initialData: PadInit
       return setError(reason instanceof Error ? reason.message : "패드를 보관하지 못했습니다.");
     }
     setSettingsOpen(false);
-    router.push("/");
+    router.push("/dashboard");
     router.refresh();
   }
 
@@ -437,7 +470,7 @@ export function PadCanvas({ initialData, currentUserId }: { initialData: PadInit
   return (
     <main className="board-page" style={boardPageStyle(appearanceDraft)}>
       <header className="board-nav">
-        <Link href="/" className="back-link"><ChevronLeft size={18} /><Logo size={22} /><b>pyxpad</b></Link>
+        <Link href={currentUserId ? "/dashboard" : "/"} className="back-link"><ChevronLeft size={18} /><Logo size={22} /><b>pyxpad</b></Link>
         <div className="board-nav-center"><LayoutGrid size={15} /><span>{board.title}</span></div>
         <div className="board-nav-actions">
           <span className={`sync-state ${connected ? "online" : ""}`} title={connected ? "실시간 연결됨" : "연결 중"} aria-label={connected ? "실시간 연결됨" : "연결 중"}>{connected ? <Wifi size={15} /> : <WifiOff size={15} />}</span>
@@ -454,7 +487,7 @@ export function PadCanvas({ initialData, currentUserId }: { initialData: PadInit
       {frozen && <div className="board-frozen-banner"><Snowflake size={16} />이 패드는 동결되어 있어요. 새 게시물·댓글·이동이 모두 막혀 있습니다.{canManage && <button type="button" onClick={toggleFreeze}>동결 해제</button>}</div>}
 
       <section className="board-hero">
-        <div className="board-hero-line" title={board.description ?? undefined}>{board.discoveryScope === "PUBLIC" ? <Globe2 size={13} /> : <LockKeyhole size={13} />}<span>{discoveryScopeLabel[board.discoveryScope]}</span><span className="board-hero-dot">·</span><h1>{board.title}</h1>{canManage && <span className={`board-state-badge ${frozen ? "frozen" : "active"}`}>{frozen ? "동결됨" : "운영중"}</span>}<span className="board-hero-dot">·</span><span className="board-hero-owner">{board.owner.name || "PyxPad"}</span></div>
+        <div className="board-hero-line" title={board.description ?? undefined}>{board.discoveryScope === "PUBLIC" ? <Globe2 size={13} /> : <LockKeyhole size={13} />}<span>{discoveryScopeLabel[board.discoveryScope]}</span><span className="board-hero-dot">·</span><h1 onDoubleClick={() => canManage && openSettings()} title={canManage ? "더블클릭하면 패드 설정에서 제목을 바꿀 수 있어요" : undefined}>{board.title}</h1>{canManage && <span className={`board-state-badge ${frozen ? "frozen" : "active"}`}>{frozen ? "동결됨" : "운영중"}</span>}<span className="board-hero-dot">·</span><span className="board-hero-owner">{board.owner.name || "PyxPad"}</span></div>
         <div className="board-hero-side"><div className="member-stack">{board.members.slice(0, 4).map((member, index) => <span key={member.user.id} style={{ zIndex: 5 - index }} title={member.user.name || "패드 멤버"}>{member.user.image ? <img src={member.user.image} alt="" /> : (member.user.name || "친")[0]}</span>)}{board.memberCount > 4 && <span>+{board.memberCount - 4}</span>}</div><span className="member-copy"><b>{board.memberCount}명</b>이 함께해요</span></div>
       </section>
 
@@ -505,6 +538,7 @@ export function PadCanvas({ initialData, currentUserId }: { initialData: PadInit
           setLocalSections={setLocalSections}
           setError={setError}
           onAddSection={() => setAddSectionOpen(true)}
+          onActiveSectionChange={selectVisibleSection}
         />
       ) : board.layout === "WALL" || board.layout === "GRID" ? (
         <FlatDragBoardView
@@ -566,9 +600,61 @@ export function PadCanvas({ initialData, currentUserId }: { initialData: PadInit
 
       {quickSection && quickComposerOpen && <PostComposer open={quickComposerOpen} onClose={() => setQuickComposerOpen(false)} sectionId={quickSection.id} sectionTitle={quickSection.title} fieldConfig={board.postFieldConfig} />}
 
-      {board.layout === "SECTIONS" && quickSection && capabilities.createPost && (
-        <button type="button" className="board-fab" aria-label={`${quickSection.title}에 새 글 추가`} onClick={() => setQuickComposerOpen(true)}><Plus size={22} /></button>
+      {quickSection && capabilities.createPost && (
+        <button
+          type="button"
+          className="board-desktop-add"
+          aria-label={`${quickSection.title}에 새 글 추가`}
+          title={`${quickSection.title}에 새 글 추가`}
+          onClick={() => setQuickComposerOpen(true)}
+        >
+          <Plus size={23} aria-hidden />
+        </button>
       )}
+
+      <div className="board-mobile-controls">
+        {mobileSearchOpen && (
+          <div className="board-mobile-search" id="board-mobile-search" role="search">
+            <Search size={15} aria-hidden />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => { if (event.key === "Escape") closeMobileSearch(); }}
+              placeholder="패드에서 검색"
+              aria-label="패드에서 검색"
+              autoFocus
+            />
+            {searching && <span>검색 중</span>}
+            <button type="button" onClick={closeMobileSearch} aria-label="검색 닫기"><X size={15} /></button>
+          </div>
+        )}
+        {mobileSectionPickerOpen && (
+          <div className="board-mobile-section-picker" id="board-mobile-section-picker" role="dialog" aria-label="글을 추가할 섹션">
+            <header><b>어디에 추가할까요?</b><button type="button" onClick={() => setMobileSectionPickerOpen(false)} aria-label="섹션 선택 닫기"><X size={14} /></button></header>
+            {sections.map((section) => <button type="button" key={section.id} onClick={() => chooseMobileSection(section.id)}>{section.title}</button>)}
+          </div>
+        )}
+        <div className="board-mobile-actions">
+          <button
+            type="button"
+            className="board-mobile-action search"
+            data-active={mobileSearchOpen || Boolean(query)}
+            aria-label={mobileSearchOpen ? "검색 닫기" : "패드에서 검색"}
+            aria-expanded={mobileSearchOpen}
+            aria-controls="board-mobile-search"
+            onClick={() => {
+              setMobileSectionPickerOpen(false);
+              if (mobileSearchOpen) closeMobileSearch();
+              else setMobileSearchOpen(true);
+            }}
+          >
+            <Search size={17} />
+          </button>
+          {quickSection && capabilities.createPost && (
+            <button type="button" className="board-mobile-action add" aria-label={`${quickSection.title}에 새 글 추가`} aria-expanded={mobileSectionPickerOpen} aria-controls={board.layout !== "SECTIONS" && sections.length > 1 ? "board-mobile-section-picker" : undefined} onClick={openMobilePostComposer}><Plus size={18} /></button>
+          )}
+        </div>
+      </div>
 
       <Modal open={addSectionOpen} onClose={() => setAddSectionOpen(false)} title="새 섹션 열기" description="생각을 모을 새로운 주제를 정해요."><form className="stack-form" onSubmit={addSection}><label>섹션 제목<input name="title" placeholder="예: 우리가 찾은 자료" required maxLength={80} autoFocus /></label><label>안내 문구<textarea name="description" placeholder="어떤 내용을 나누는 곳인지 알려주세요." rows={3} maxLength={240} /></label>{error && <p className="form-error">{error}</p>}<button className="button primary full">섹션 추가</button></form></Modal>
 

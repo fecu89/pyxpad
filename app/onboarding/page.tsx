@@ -5,6 +5,7 @@ import { safeInternalCallbackUrl } from "@/lib/auth/page-guard";
 import { getOnboardingOrganizationOptions } from "@/lib/users/organization";
 import { getTeacherApprovalForUser } from "@/lib/users/teacher-approvals";
 import { OnboardingExperience } from "@/components/onboarding/onboarding-experience";
+import { DASHBOARD_PATH } from "@/lib/routes";
 
 export const dynamic = "force-dynamic";
 
@@ -17,24 +18,29 @@ export const metadata: Metadata = {
 export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ next?: string | string[] }> }) {
   const user = await getCurrentUser();
   if (!user) redirect("/?login=1&callbackUrl=%2Fonboarding");
-  if (user.onboardingCompletedAt) redirect("/");
+  if (user.onboardingCompletedAt) redirect(DASHBOARD_PATH);
   const [schools, params, teacherRequest] = await Promise.all([
     getOnboardingOrganizationOptions(),
     searchParams,
     getTeacherApprovalForUser(user.id),
   ]);
-  const candidateNextPath = safeInternalCallbackUrl(params.next);
-  const nextPath = candidateNextPath.startsWith("/onboarding") ? "/" : candidateNextPath;
+  const candidateNextPath = safeInternalCallbackUrl(params.next, DASHBOARD_PATH);
+  const nextPath = candidateNextPath.startsWith("/onboarding")
+    || candidateNextPath.startsWith("/approval-pending")
+    ? DASHBOARD_PATH
+    : candidateNextPath;
 
   return (
     <OnboardingExperience
       initialName={user.name}
       initialImage={user.image}
-      email={user.email}
+      loginIdentifier={user.loginIdentifier}
+      loginType={user.loginType}
       role={user.role}
       initialAccountType={teacherRequest || user.role === "TEACHER" ? "TEACHER" : "STUDENT"}
       initialSchoolId={teacherRequest?.school.id ?? user.school?.id ?? null}
       initialSchoolGroupId={teacherRequest?.schoolGroup.id ?? user.schoolGroup?.id ?? null}
+      initialStudentNumber={user.studentNumber}
       rejectionReason={teacherRequest?.status === "REJECTED" ? teacherRequest.reviewReason : null}
       schools={schools}
       nextPath={nextPath}

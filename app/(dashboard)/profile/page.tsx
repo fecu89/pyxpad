@@ -13,10 +13,13 @@ export default async function ProfilePage() {
     <ProfileForm
       initialName={user.name}
       initialImage={user.image}
-      email={user.email}
+      loginIdentifier={user.loginIdentifier}
+      loginType={user.loginType}
       role={user.role}
       school={user.school}
       schoolGroup={user.schoolGroup}
+      hasPasswordCredential={user.hasPasswordCredential}
+      studentNumber={user.studentNumber}
     />
   );
 }

@@ -2,10 +2,13 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, BadgeCheck, Building2, ChevronLeft, ChevronRight, Search, Shield, SlidersHorizontal, Users, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, BadgeCheck, Building2, ChevronLeft, ChevronRight, FileSpreadsheet, LayoutDashboard, Search, Shield, SlidersHorizontal, Users, X } from "lucide-react";
 import { AuditLogList } from "@/components/admin/audit-log-list";
 import { BulkUserActions, type BulkUpdateResult } from "@/components/admin/bulk-user-actions";
 import { SchoolManager } from "@/components/admin/school-manager";
+import { SchoolDashboard } from "@/components/admin/school-dashboard";
+import { StudentRosterImport } from "@/components/admin/student-roster-import";
 import { TeacherApprovalQueue } from "@/components/admin/teacher-approval-queue";
 import type { AdminActor, AdminUserRecord, AuditLogRecord, SchoolDirectoryItem, TeacherApprovalRecord } from "@/components/admin/types";
 import { UserAdminActions } from "@/components/admin/user-admin-actions";
@@ -14,7 +17,8 @@ import { Logo } from "@/components/ui/logo";
 
 const roleLabels = { SUPER_ADMIN: "전체관리자", ADMIN: "보조관리자", TEACHER: "교사", STUDENT: "학생" } as const;
 const PAGE_SIZE_OPTIONS = [10, 50, 100] as const;
-type UserFilters = { role: string; status: string; email: string; schoolId: string; schoolGroupId: string };
+type UserFilters = { role: string; status: string; account: string; schoolId: string; schoolGroupId: string };
+type AdminTab = "dashboard" | "users" | "approvals" | "audit" | "schools" | "roster";
 
 function pageWindow(page: number, totalPages: number) {
   const size = 5;
@@ -28,9 +32,12 @@ function pageWindow(page: number, totalPages: number) {
 type AdminConsoleProps = {
   actor: AdminActor;
   canViewUsers: boolean;
+  canViewSchools: boolean;
+  canManageSchoolGroups: boolean;
+  canManageRoster: boolean;
   canViewAudit: boolean;
   canManageTeacherApprovals: boolean;
-  initialTab: "users" | "approvals" | "audit" | "schools";
+  initialTab: AdminTab;
   initialUsers: AdminUserRecord[];
   initialTotalCount: number;
   initialPage: number;
@@ -44,10 +51,9 @@ type AdminConsoleProps = {
   initialTeacherApprovalPageSize: number;
 };
 
-export function AdminConsole({ actor, canViewUsers, canViewAudit, canManageTeacherApprovals, initialTab, initialUsers, initialTotalCount, initialPage, initialPageSize, initialLogs, initialAuditCursor, schools, initialTeacherApprovals, initialTeacherApprovalCount, initialTeacherApprovalPage, initialTeacherApprovalPageSize }: AdminConsoleProps) {
-  const isRepresentative = actor.role === "TEACHER" && actor.isSchoolRepresentative;
-  const canManageSchools = actor.role === "SUPER_ADMIN" || isRepresentative;
-  const [tab, setTab] = useState<"users" | "approvals" | "audit" | "schools">(initialTab);
+export function AdminConsole({ actor, canViewUsers, canViewSchools, canManageSchoolGroups, canManageRoster, canViewAudit, canManageTeacherApprovals, initialTab, initialUsers, initialTotalCount, initialPage, initialPageSize, initialLogs, initialAuditCursor, schools, initialTeacherApprovals, initialTeacherApprovalCount, initialTeacherApprovalPage, initialTeacherApprovalPageSize }: AdminConsoleProps) {
+  const router = useRouter();
+  const [tab, setTab] = useState<AdminTab>(initialTab);
   const [users, setUsers] = useState(initialUsers);
   const [directoryCount, setDirectoryCount] = useState(initialTotalCount);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
@@ -57,7 +63,7 @@ export function AdminConsole({ actor, canViewUsers, canViewAudit, canManageTeach
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [emailFilter, setEmailFilter] = useState("");
+  const [accountFilter, setAccountFilter] = useState("");
   const [schoolFilter, setSchoolFilter] = useState("");
   const [schoolGroupFilter, setSchoolGroupFilter] = useState("");
   const [logs, setLogs] = useState(initialLogs);
@@ -69,9 +75,12 @@ export function AdminConsole({ actor, canViewUsers, canViewAudit, canManageTeach
   const filterGroups = schools.find((school) => school.id === schoolFilter)?.groups ?? [];
   const filterClasses = filterGroups.filter((group) => group.type === "CLASS");
   const filterDepartments = filterGroups.filter((group) => group.type === "DEPARTMENT");
-  const hasActiveFilters = Boolean(roleFilter || statusFilter || emailFilter.trim() || schoolFilter || schoolGroupFilter);
+  const hasActiveFilters = Boolean(roleFilter || statusFilter || accountFilter.trim() || schoolFilter || schoolGroupFilter);
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-  const selectableUserIds = users.filter((user) => user.id !== actor.id).map((user) => user.id);
+  const canBulkManageUsers = actor.role === "SUPER_ADMIN"
+    || (actor.role === "TEACHER" && actor.isSchoolRepresentative)
+    || actor.systemPermissions.some((permission) => permission === "CHANGE_NON_ADMIN_ROLES" || permission === "SUSPEND_USERS");
+  const selectableUserIds = canBulkManageUsers ? users.filter((user) => user.id !== actor.id).map((user) => user.id) : [];
   const actionUser = users.find((user) => user.id === actionUserId) ?? null;
 
   async function loadUsers(targetPage: number, targetPageSize: number, overrides: Partial<UserFilters> = {}) {
@@ -80,14 +89,15 @@ export function AdminConsole({ actor, canViewUsers, canViewAudit, canManageTeach
       const filters: UserFilters = {
         role: overrides.role ?? roleFilter,
         status: overrides.status ?? statusFilter,
-        email: overrides.email ?? emailFilter,
+        account: overrides.account ?? accountFilter,
         schoolId: overrides.schoolId ?? schoolFilter,
         schoolGroupId: overrides.schoolGroupId ?? schoolGroupFilter,
       };
       const query = new URLSearchParams({ page: String(targetPage), pageSize: String(targetPageSize) });
       if (filters.role) query.set("role", filters.role);
       if (filters.status) query.set("status", filters.status);
-      if (filters.email.trim()) query.set("email", filters.email.trim());
+      const account = filters.account.trim();
+      if (account) query.set(account.includes("@") ? "email" : "loginId", account);
       if (filters.schoolId) query.set("schoolId", filters.schoolId);
       if (filters.schoolGroupId) query.set("schoolGroupId", filters.schoolGroupId);
       const response = await fetch(`/api/admin/users?${query}`, { cache: "no-store" });
@@ -95,7 +105,7 @@ export function AdminConsole({ actor, canViewUsers, canViewAudit, canManageTeach
       if (!response.ok) throw new Error(result.error || "사용자 목록을 불러오지 못했습니다.");
       setUsers(result.users);
       setTotalCount(result.totalCount);
-      if (!filters.role && !filters.status && !filters.email.trim() && !filters.schoolId && !filters.schoolGroupId) {
+      if (!filters.role && !filters.status && !account && !filters.schoolId && !filters.schoolGroupId) {
         setDirectoryCount(result.totalCount);
       }
       setPage(result.page);
@@ -158,18 +168,18 @@ export function AdminConsole({ actor, canViewUsers, canViewAudit, canManageTeach
     void loadUsers(1, pageSize, { schoolGroupId: nextSchoolGroupId });
   }
 
-  function clearEmailFilter() {
-    setEmailFilter("");
-    void loadUsers(1, pageSize, { email: "" });
+  function clearAccountFilter() {
+    setAccountFilter("");
+    void loadUsers(1, pageSize, { account: "" });
   }
 
   function resetFilters() {
     setRoleFilter("");
     setStatusFilter("");
-    setEmailFilter("");
+    setAccountFilter("");
     setSchoolFilter("");
     setSchoolGroupFilter("");
-    void loadUsers(1, pageSize, { role: "", status: "", email: "", schoolId: "", schoolGroupId: "" });
+    void loadUsers(1, pageSize, { role: "", status: "", account: "", schoolId: "", schoolGroupId: "" });
   }
 
   function changePageSize(nextPageSize: number) {
@@ -214,6 +224,22 @@ export function AdminConsole({ actor, canViewUsers, canViewAudit, canManageTeach
     void loadAudit(true);
   }
 
+  function onRosterImported(importedCount: number) {
+    setDirectoryCount((current) => current + importedCount);
+    router.refresh();
+    void loadUsers(1, pageSize);
+    void loadAudit(true);
+  }
+
+  function openStudentDirectory(targetSchoolId?: string) {
+    const nextSchoolId = targetSchoolId ?? "";
+    setTab("users");
+    setRoleFilter("STUDENT");
+    setSchoolFilter(nextSchoolId);
+    setSchoolGroupFilter("");
+    void loadUsers(1, pageSize, { role: "STUDENT", schoolId: nextSchoolId, schoolGroupId: "" });
+  }
+
   const selectedList = useMemo(() => Array.from(selectedIds), [selectedIds]);
 
   return (
@@ -221,36 +247,50 @@ export function AdminConsole({ actor, canViewUsers, canViewAudit, canManageTeach
       <header className="admin-nav">
         <Link href="/" className="brand"><Logo size={29} /><span>pyxpad</span></Link>
         <div className="admin-nav-title"><Shield size={17} /><span>관리자 센터</span></div>
-        <Link href="/" className="button ghost"><ArrowLeft size={16} />패드로 돌아가기</Link>
+        <Link href="/dashboard" className="button ghost"><ArrowLeft size={16} />패드로 돌아가기</Link>
       </header>
       <div className="admin-workspace">
         <aside className="admin-sidebar">
           <div className="admin-sidebar-heading"><span>ADMIN MENU</span><b>관리 메뉴</b></div>
           <nav className="admin-sidebar-nav" aria-label="관리자 기능">
+            {canViewSchools && <button type="button" aria-current={tab === "dashboard" ? "page" : undefined} onClick={() => setTab("dashboard")}><span className="admin-sidebar-icon"><LayoutDashboard size={17} /></span><span><b>학교 대시보드</b><small>학생·교사·소속 현황</small></span></button>}
             {canViewUsers && <button type="button" aria-current={tab === "users" ? "page" : undefined} onClick={() => setTab("users")}><span className="admin-sidebar-icon"><Users size={17} /></span><span><b>사용자 관리</b><small>계정·권한·소속</small></span><em>{directoryCount}</em></button>}
             {canManageTeacherApprovals && <button type="button" aria-current={tab === "approvals" ? "page" : undefined} onClick={() => setTab("approvals")}><span className="admin-sidebar-icon"><BadgeCheck size={17} /></span><span><b>교사 가입 요청</b><small>학교·부서 승인</small></span><em data-alert={teacherApprovalCount > 0}>{teacherApprovalCount}</em></button>}
-            {canManageSchools && <button type="button" aria-current={tab === "schools" ? "page" : undefined} onClick={() => setTab("schools")}><span className="admin-sidebar-icon"><Building2 size={17} /></span><span><b>소속 관리</b><small>학교·반·부서</small></span><em>{schools.length}</em></button>}
+            {canViewSchools && <button type="button" aria-current={tab === "schools" ? "page" : undefined} onClick={() => setTab("schools")}><span className="admin-sidebar-icon"><Building2 size={17} /></span><span><b>소속 관리</b><small>학급·부서·학생 번호</small></span><em>{schools.length}</em></button>}
+            {canManageRoster && <button type="button" aria-current={tab === "roster" ? "page" : undefined} onClick={() => setTab("roster")}><span className="admin-sidebar-icon"><FileSpreadsheet size={17} /></span><span><b>학생 계정 발급</b><small>Excel 명단·초기 비밀번호</small></span></button>}
             {canViewAudit && <button type="button" aria-current={tab === "audit" ? "page" : undefined} onClick={() => setTab("audit")}><span className="admin-sidebar-icon"><Shield size={17} /></span><span><b>감사 로그</b><small>중요 작업 기록</small></span></button>}
           </nav>
           <div className="admin-sidebar-actor">
             <span className="admin-avatar small">{(actor.name || "?")[0]}</span>
-            <div><b>{actor.name || "관리자"}</b><span>{roleLabels[actor.role]} · 권한 {actor.role === "SUPER_ADMIN" ? "전체" : `${actor.systemPermissions.length}개`}</span></div>
+            <div><b>{actor.name || "관리자"}</b><span>{roleLabels[actor.role]} · {actor.role === "SUPER_ADMIN" ? "전체 권한" : actor.role === "TEACHER" ? actor.isSchoolRepresentative ? "학교 대표관리자" : "학생 번호 관리" : `권한 ${actor.systemPermissions.length}개`}</span></div>
           </div>
           <p className="admin-sidebar-note">민감한 작업은 사유와 함께 감사 로그에 기록됩니다.</p>
         </aside>
         <div className="admin-workspace-content">
           {error && <p className="admin-global-error" role="alert">{error}</p>}
 
+          {tab === "dashboard" && canViewSchools && (
+            <SchoolDashboard
+              schools={schools}
+              canEditSchoolProfile={actor.role === "SUPER_ADMIN"}
+              canManageRoster={canManageRoster}
+              onOpenStudents={openStudentDirectory}
+              onOpenOrganizations={() => setTab("schools")}
+              onOpenRoster={() => setTab("roster")}
+              onChanged={() => void loadAudit(true)}
+            />
+          )}
+
           {tab === "users" && canViewUsers && (
         <section className="admin-panel admin-user-list-panel">
-          <header className="admin-panel-header"><div><span className="admin-kicker">DIRECTORY</span><h2>사용자</h2><p>이메일로 찾거나 역할과 소속으로 목록을 좁혀보세요.</p></div></header>
+          <header className="admin-panel-header"><div><span className="admin-kicker">DIRECTORY</span><h2>사용자</h2><p>로그인 아이디나 카카오 이메일로 찾고 역할·소속으로 좁혀보세요.</p></div></header>
           <form className="admin-user-search" onSubmit={searchUsers}>
             <div className="admin-search-main">
               <div className="admin-search-field">
                 <Search size={17} aria-hidden />
-                <label htmlFor="admin-user-email-search" className="sr-only">이메일 정확 검색</label>
-                <input id="admin-user-email-search" type="email" value={emailFilter} onChange={(event) => setEmailFilter(event.target.value)} placeholder="전체 이메일 주소 입력" autoComplete="off" />
-                {emailFilter && <button type="button" className="admin-search-clear" onClick={clearEmailFilter} disabled={pending} aria-label="이메일 검색어 지우기"><X size={15} /></button>}
+                <label htmlFor="admin-user-account-search" className="sr-only">로그인 아이디 또는 카카오 이메일 정확 검색</label>
+                <input id="admin-user-account-search" type="text" value={accountFilter} onChange={(event) => setAccountFilter(event.target.value)} placeholder="아이디 또는 카카오 이메일 입력" autoComplete="off" autoCapitalize="none" spellCheck={false} />
+                {accountFilter && <button type="button" className="admin-search-clear" onClick={clearAccountFilter} disabled={pending} aria-label="로그인 식별자 검색어 지우기"><X size={15} /></button>}
               </div>
               <button className="button primary admin-search-submit" disabled={pending}><Search size={15} />사용자 찾기</button>
             </div>
@@ -275,7 +315,7 @@ export function AdminConsole({ actor, canViewUsers, canViewAudit, canManageTeach
           </form>
 
           {selectedList.length > 0 && (
-            <BulkUserActions actor={actor} selectedIds={selectedList} schools={schools} onClose={() => setSelectedIds(new Set())} onApplied={onBulkApplied} />
+            <BulkUserActions actor={actor} selectedIds={selectedList} selectedUsers={users.filter((user) => selectedIds.has(user.id))} schools={schools} onClose={() => setSelectedIds(new Set())} onApplied={onBulkApplied} />
           )}
           {bulkNotice && <p className="admin-bulk-notice" role="status">{bulkNotice}</p>}
 
@@ -289,6 +329,7 @@ export function AdminConsole({ actor, canViewUsers, canViewAudit, canManageTeach
                   user={user}
                   schools={schools}
                   selected={selectedIds.has(user.id)}
+                  selectionDisabled={!canBulkManageUsers}
                   onToggleSelected={() => toggleSelected(user.id)}
                   onUpdated={updateUser}
                   onOpenActions={() => setActionUserId(user.id)}
@@ -312,7 +353,9 @@ export function AdminConsole({ actor, canViewUsers, canViewAudit, canManageTeach
         </section>
           )}
 
-          {tab === "schools" && canManageSchools && <SchoolManager schools={schools} canManageSchoolLevel={actor.role === "SUPER_ADMIN"} onAuditChanged={() => void loadAudit(true)} />}
+          {tab === "schools" && canViewSchools && <SchoolManager schools={schools} canManageSchoolLevel={actor.role === "SUPER_ADMIN"} canManageSchoolGroups={canManageSchoolGroups} onAuditChanged={() => void loadAudit(true)} />}
+
+          {tab === "roster" && canManageRoster && <StudentRosterImport schools={schools} onImported={onRosterImported} />}
 
           {tab === "approvals" && canManageTeacherApprovals && (
             <TeacherApprovalQueue

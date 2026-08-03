@@ -59,7 +59,7 @@ export function FolderView({
   async function deleteFolder() {
     if (!window.confirm(`“${folder.name}” 폴더를 삭제할까요? 패드는 삭제되지 않습니다.`)) return;
     const result = await mutate(`/api/dashboard?folderId=${encodeURIComponent(folder.id)}`, { method: "DELETE" });
-    if (result) router.push("/");
+    if (result) router.push("/dashboard");
   }
 
   return (

@@ -9,6 +9,7 @@ export type PadMoreMenuItem = {
   label: string;
   icon: ReactNode;
   onClick: () => void;
+  tone?: "default" | "danger";
 };
 
 // 자주 안 쓰는 보드 상단 아이콘들(활동·팔로우·보관함·내보내기)을 "더보기" 하나로
@@ -18,10 +19,12 @@ export function PadMoreMenu({
   items,
   className = "icon-button",
   rootClassName,
+  ariaLabel = "더보기",
 }: {
   items: PadMoreMenuItem[];
   className?: string;
   rootClassName?: string;
+  ariaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -39,13 +42,13 @@ export function PadMoreMenu({
 
   return (
     <div className={`${styles.root} ${rootClassName ?? ""}`.trim()} ref={rootRef}>
-      <button type="button" className={className} aria-label="더보기" onClick={() => setOpen((value) => !value)}>
+      <button type="button" className={className} aria-label={ariaLabel} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
         <MoreHorizontal size={18} />
       </button>
       {open && (
-        <div className={styles.panel} role="menu" aria-label="더보기 메뉴">
+        <div className={styles.panel} role="menu" aria-label={`${ariaLabel} 메뉴`}>
           {items.map((item) => (
-            <button key={item.key} type="button" role="menuitem" className={styles.item} onClick={() => { setOpen(false); item.onClick(); }}>
+            <button key={item.key} type="button" role="menuitem" className={styles.item} data-tone={item.tone ?? "default"} onClick={() => { setOpen(false); item.onClick(); }}>
               {item.icon}
               <span>{item.label}</span>
             </button>

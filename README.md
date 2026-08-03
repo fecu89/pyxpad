@@ -38,11 +38,11 @@ Next.js (App Router) · PostgreSQL · Prisma · dnd-kit로 만들었습니다.
 
 ## 소개
 
-PyxPad는 교사가 반을 만들고, 학생들이 카드(게시물)로 생각을 모으는 Padlet 스타일의 보드 서비스입니다. 섹션(열) 단위로 주제를 나누고, 카드를 길게 눌러 순서를 바꾸고, 댓글·반응으로 서로의 생각에 응답합니다. 카카오 로그인만으로 시작할 수 있고, 학교·학급 단위 권한 관리와 학생 개인정보 암호화까지 갖추고 있습니다.
+PyxPad는 교사가 반을 만들고, 학생들이 카드(게시물)로 생각을 모으는 Padlet 스타일의 보드 서비스입니다. 섹션(열) 단위로 주제를 나누고, 카드를 길게 눌러 순서를 바꾸고, 댓글·반응으로 서로의 생각에 응답합니다. 로그인 아이디·비밀번호 또는 카카오로 시작할 수 있고, 학교·학급 단위 권한 관리와 학생 개인정보 암호화까지 갖추고 있습니다.
 
 ## 스크린샷으로 보는 사용법
 
-아래 화면은 교사·학생·전체관리자 세 역할에 각각 로그인해 실제로 찍은 스크린샷입니다.
+아래 화면은 시드의 예시 학교·패드 데이터를 사용해 교사·학생·전체관리자 화면을 각각 점검한 스크린샷입니다.
 
 ### 1. 교사 — 내 패드 홈
 
@@ -136,7 +136,7 @@ PyxPad는 교사가 반을 만들고, 학생들이 카드(게시물)로 생각�
 - **안전한 콘텐츠 렌더링** — `react-markdown` + `rehype-sanitize`로 게시물 본문을 안전하게 렌더링
 - **실시간 갱신** — SSE 기반 보드 이벤트로 새로고침 없이 변경 사항 반영
 - **내보내기** — CSV(수식 인젝션 방어 적용)·XLSX·첨부파일 ZIP, 인쇄용 뷰, 발표 모드
-- **보안 기본기** — CSRF same-origin 검사, 인메모리 rate limit, PII 암호화·마스킹, 보안 응답 헤더(CSP 등)
+- **보안 기본기** — CSRF same-origin 검사, DB 공유형 IP·계정·조합별 로그인 제한, 인증 이벤트 집계, PII 암호화·마스킹, 보안 응답 헤더(CSP 등)
 
 ## 기술 스택
 
@@ -144,7 +144,7 @@ PyxPad는 교사가 반을 만들고, 학생들이 카드(게시물)로 생각�
 |---|---|
 | 프레임워크 | Next.js 16 (App Router), React 19, TypeScript |
 | 데이터베이스 | PostgreSQL, Prisma ORM |
-| 인증 | NextAuth (카카오 OAuth) |
+| 인증 | NextAuth (이메일 Credentials + 카카오 OAuth), scrypt |
 | 드래그 앤 드롭 | @dnd-kit |
 | 스타일 | Tailwind CSS 4, CSS Modules |
 | 콘텐츠 렌더링 | react-markdown, rehype-sanitize |
@@ -259,16 +259,19 @@ cp .env.example .env.local
 |---|---|---|---|
 | `DATABASE_URL` | ✅ | PostgreSQL 연결 주소 | 2~3단계에서 만든 값, 예: `postgresql://pyxpad:pyxpad@localhost:5432/pyxpad` |
 | `NEXTAUTH_URL` | ✅ | 이 앱이 실제로 열리는 주소 | 로컬 개발이면 `http://localhost:3001` 그대로 |
+| `APP_ORIGINS` | ✅ | 상태 변경 API가 허용할 origin 목록 | 쉼표로 구분하며 프로토콜·호스트·포트를 모두 적음. 예: `http://localhost:3001,https://pad.example.com` |
 | `AUTH_SECRET` | ✅ | 로그인 세션을 서명하는 비밀키 | 터미널에서 `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` 실행해 나온 값 |
 | `KAKAO_CLIENT_ID` | ✅ | 카카오 로그인 REST API 키 | [6단계](#6-카카오-로그인-앱-만들기) 참고 |
 | `KAKAO_CLIENT_SECRET` | ✅ | 카카오 로그인 클라이언트 시크릿 | [6단계](#6-카카오-로그인-앱-만들기) 참고 |
 | `PII_ACTIVE_KEY_ID` | ✅ | 아래 암호화 키 중 지금 쓸 키의 이름표 | 그냥 `v1`로 두면 됩니다 |
 | `PII_ENCRYPTION_KEY_V1` | ✅ | 학생 이름·이메일 등을 암호화하는 키(base64, 32바이트) | `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`를 **다시 한번 실행**해서 나온 값 |
-| `PII_LOOKUP_KEY` | ✅ | 이메일 중복 확인용 별도 키(base64, 32바이트) | 위 명령을 **또 한번** 실행 — `PII_ENCRYPTION_KEY_V1`과 반드시 다른 값이어야 합니다 |
+| `PII_LOOKUP_KEY` | ✅ | 로그인 식별자·닉네임 중복 확인용 별도 키(base64, 32바이트) | 위 명령을 **또 한번** 실행 — `PII_ENCRYPTION_KEY_V1`과 반드시 다른 값이어야 합니다 |
 | `BOOTSTRAP_SUPER_ADMIN_EMAIL` | ✅ | 이 이메일로 카카오 로그인하면 자동으로 전체관리자가 됨 | 본인이 로그인할 카카오 계정 이메일 |
 | `UPLOAD_DIR` | ✅ | 업로드 파일을 저장할 폴더 | 로컬 개발은 `./uploads`(자동 생성됨) |
 | `MAX_UPLOAD_SIZE_MB` | | 첨부파일 1개 최대 용량(MB) | 비우면 기본값 30 |
 | `IMAGE_PROCESSING_CONCURRENCY` | | 이미지 변환(WebP) 동시 처리 개수 | 비우면 기본값 2, 서버 사양이 낮으면 1 권장 |
+| `TRUST_CLOUDFLARE_IP_HEADER` | | Cloudflare의 실제 IP 헤더 신뢰 | 원본 서버를 Cloudflare에서만 접근 가능하게 막은 배포에서만 `true` |
+| `TRUST_X_FORWARDED_FOR` | | 자체 프록시의 전달 IP 신뢰 | 신뢰 프록시가 외부 입력을 덮어쓰고 원본 서버 직접 접근을 막은 경우만 `true` |
 
 > `node -e "..."` 명령은 위에서 시킨 대로 **총 세 번** 실행해서(`AUTH_SECRET`, `PII_ENCRYPTION_KEY_V1`, `PII_LOOKUP_KEY`) 서로 다른 세 값을 넣어야 합니다. 같은 값을 복사해서 재사용하면 안 됩니다. `.env.local`은 절대 git에 커밋하지 마세요(이 저장소는 이미 `.gitignore`로 막아뒀습니다).
 
@@ -277,6 +280,7 @@ cp .env.example .env.local
 ```dotenv
 DATABASE_URL="postgresql://pyxpad:pyxpad@localhost:5432/pyxpad"
 NEXTAUTH_URL="http://localhost:3001"
+APP_ORIGINS="http://localhost:3001"
 AUTH_SECRET="여기에-node-명령으로-만든-값-1"
 KAKAO_CLIENT_ID="카카오 개발자 콘솔에서 복사한 REST API 키"
 KAKAO_CLIENT_SECRET="카카오 개발자 콘솔에서 복사한 클라이언트 시크릿"
@@ -287,11 +291,13 @@ BOOTSTRAP_SUPER_ADMIN_EMAIL="내카카오이메일@example.com"
 UPLOAD_DIR="./uploads"
 MAX_UPLOAD_SIZE_MB=30
 IMAGE_PROCESSING_CONCURRENCY=2
+TRUST_CLOUDFLARE_IP_HEADER=false
+TRUST_X_FORWARDED_FOR=false
 ```
 
 ### 6. 카카오 로그인 앱 만들기
 
-이 서비스는 카카오 계정으로만 로그인합니다. 앱을 하나 등록해야 `KAKAO_CLIENT_ID`/`KAKAO_CLIENT_SECRET`을 받을 수 있습니다.
+아이디·비밀번호 로그인만으로도 개발할 수 있습니다. 카카오 로그인도 함께 제공하려면 앱을 등록해 `KAKAO_CLIENT_ID`/`KAKAO_CLIENT_SECRET`을 준비합니다.
 
 1. [Kakao Developers](https://developers.kakao.com/)에 카카오 계정으로 로그인합니다.
 2. 상단 메뉴 **내 애플리케이션 → 애플리케이션 추가하기**로 앱을 하나 만듭니다(이름은 아무거나 괜찮습니다).
@@ -306,6 +312,7 @@ IMAGE_PROCESSING_CONCURRENCY=2
 ```bash
 npm run db:generate   # Prisma 클라이언트 코드 생성
 npm run db:migrate    # 위에서 만든 빈 데이터베이스에 테이블 생성
+npm run db:backfill-nicknames # 기존 사용자 닉네임 HMAC 백필(새 DB는 0건)
 npm run db:seed       # 학교·데모 교사/학생 계정 같은 기본 데이터 채우기
 ```
 
@@ -315,7 +322,9 @@ npm run db:seed       # 학교·데모 교사/학생 계정 같은 기본 데이
 npm run dev
 ```
 
-터미널에 `Ready`가 뜨면 브라우저에서 `http://localhost:3001`을 엽니다. **카카오로 시작하기** 버튼으로 로그인하면 되고, `BOOTSTRAP_SUPER_ADMIN_EMAIL`에 적은 이메일로 로그인한 계정은 자동으로 전체관리자가 됩니다.
+터미널에 `Ready`가 뜨면 브라우저에서 `http://localhost:3001`을 엽니다. 로그인 창의 **회원가입**에서 3~20자 영문·숫자 아이디를 중복 확인한 뒤 10자 이상이면서 영문자·숫자·특수문자를 포함한 비밀번호로 실제 계정을 만들 수 있고, 곧바로 고유 닉네임·학교·반/부서 설정으로 이어집니다. 학생은 즉시 완료되고 교사는 학교 대표교사 또는 전체관리자의 승인이 필요합니다. `BOOTSTRAP_SUPER_ADMIN_EMAIL`은 카카오가 검증한 같은 이메일로 처음 로그인할 때만 전체관리자를 만들며 일반 아이디 가입에는 적용되지 않습니다.
+
+로그인 제한은 PostgreSQL에 저장되어 서버 재시작과 다중 인스턴스에서도 IP·계정·IP+계정 단위로 공유됩니다. Vercel에서는 플랫폼의 위조 방지 IP 헤더를 자동 사용합니다. 자체 프록시는 위 표의 신뢰 옵션을 켜기 전에 반드시 원본 서버 직접 접근을 차단해야 합니다. 운영 환경에서는 애플리케이션 제한에 더해 WAF에서 인증 경로의 IP별 속도 제한도 적용하세요.
 
 > 운영 환경에 올릴 때는 `UPLOAD_DIR`을 컨테이너가 재시작돼도 사라지지 않는 영구 볼륨으로 지정하고 정기적으로 백업하세요. `DATABASE_POOL_MAX`(기본 10)로 Prisma 커넥션 풀 크기도 조정할 수 있습니다.
 

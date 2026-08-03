@@ -40,3 +40,11 @@
   flex-shrink: 0;
   color: var(--muted);
 }
+
+.item[data-tone="danger"] {
+  color: var(--danger);
+}
+
+.item[data-tone="danger"] svg {
+  color: currentColor;
+}

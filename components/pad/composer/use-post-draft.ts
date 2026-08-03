@@ -4,6 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 const draftVersion = 1;
 const autosaveDelayMs = 700;
+const draftKeyPrefix = "pyxpad:post-draft:";
+// 저장/폐기 없이 편집창을 벗어난 초안은 지워지지 않아 학기 단위로 계속 쌓입니다. 이만큼 지난
+// 초안은 사용자가 "이어쓰기"를 기대할 시점이 아니므로 마운트할 때 정리합니다.
+const draftMaxAgeMs = 14 * 24 * 60 * 60 * 1_000;
 
 export type PostDraftValue = {
   title: string;
@@ -17,7 +21,37 @@ type StoredPostDraft = {
 };
 
 function storageKey(scope: string) {
-  return `pyxpad:post-draft:v${draftVersion}:${scope}`;
+  return `${draftKeyPrefix}v${draftVersion}:${scope}`;
+}
+
+// 만료된 초안과 이전 버전 형식의 초안을 함께 걷어냅니다. 실패해도(사파리 프라이빗 모드 등)
+// 초안 기능 자체는 계속 동작해야 하므로 조용히 넘어갑니다.
+function pruneStaleDrafts(keepKey: string) {
+  try {
+    const expiredBefore = Date.now() - draftMaxAgeMs;
+    const removable: string[] = [];
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (!key?.startsWith(draftKeyPrefix) || key === keepKey) continue;
+      if (!key.startsWith(`${draftKeyPrefix}v${draftVersion}:`)) {
+        removable.push(key);
+        continue;
+      }
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      let savedAt: number;
+      try {
+        savedAt = new Date((JSON.parse(raw) as Partial<StoredPostDraft>).savedAt ?? 0).getTime();
+      } catch {
+        removable.push(key);
+        continue;
+      }
+      if (!Number.isFinite(savedAt) || savedAt < expiredBefore) removable.push(key);
+    }
+    for (const key of removable) localStorage.removeItem(key);
+  } catch {
+    // 저장 공간을 읽을 수 없는 브라우저에서는 정리를 건너뜁니다.
+  }
 }
 
 function readDraft(scope: string): StoredPostDraft | null {
@@ -93,6 +127,8 @@ export function usePostDraft({
       const stored = enabled ? readDraft(scope) : null;
       setAvailableDraft(stored);
       setReady(true);
+      // 지금 쓰는 초안은 남기고 오래된 것만 정리해, 쿼터가 차서 자동저장이 멈추는 걸 막습니다.
+      pruneStaleDrafts(storageKey(scope));
     });
     return () => {
       active = false;

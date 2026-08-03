@@ -12,7 +12,11 @@ import type { LinkPreview } from "@/lib/link-preview/types";
 import { fetchYouTubePreview } from "@/lib/link-preview/youtube";
 
 export const maximumHtmlBytes = 3 * 1024 * 1024;
+// setTimeout은 "소켓이 놀고 있는 시간"만 재기 때문에, 타임아웃 직전마다 1바이트씩 흘려보내는
+// 서버는 이 값과 무관하게 연결을 사실상 무한정 붙잡을 수 있습니다. 리다이렉트 체인까지 합쳐
+// 전체 소요 시간에 별도의 마감을 둡니다.
 const requestTimeoutMs = 5_000;
+const totalDeadlineMs = 12_000;
 const maximumRedirects = 3;
 const closingHeadTag = Buffer.from("</head>");
 
@@ -54,12 +58,29 @@ export async function readHtmlHead(
   return Buffer.concat(chunks, size);
 }
 
-async function requestPage(url: URL): Promise<PageResponse> {
+async function requestPage(url: URL, deadlineAt: number): Promise<PageResponse> {
   const address = await resolvePublicAddress(url);
   const hostname = url.hostname.startsWith("[") ? url.hostname.slice(1, -1) : url.hostname;
   const transport = url.protocol === "https:" ? https : http;
 
   return new Promise((resolve, reject) => {
+    let settled = false;
+    const settle = (action: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(deadlineTimer);
+      action();
+    };
+    const succeed = (value: PageResponse) => settle(() => resolve(value));
+    const fail = (error: unknown) => settle(() => reject(error));
+
+    // 유휴 소켓 타임아웃(setTimeout)과 별개로, 응답을 조금씩 흘려보내며 연결을 붙잡는 서버를
+    // 위해 전체 마감 시각을 강제합니다.
+    const deadlineTimer = setTimeout(() => {
+      request.destroy(new LinkPreviewError("외부 페이지 응답 시간이 초과됐습니다.", 504));
+    }, Math.max(1, deadlineAt - Date.now()));
+    deadlineTimer.unref?.();
+
     const request = transport.request({
       protocol: url.protocol,
       hostname: address.address,
@@ -82,17 +103,17 @@ async function requestPage(url: URL): Promise<PageResponse> {
         : "";
       if (status >= 300 && status < 400) {
         response.resume();
-        resolve({ body: Buffer.alloc(0), contentType, location, status });
+        succeed({ body: Buffer.alloc(0), contentType, location, status });
         return;
       }
       if (status < 200 || status >= 300) {
         response.resume();
-        reject(new LinkPreviewError(`외부 페이지가 HTTP ${status}로 응답했습니다.`, 422));
+        fail(new LinkPreviewError(`외부 페이지가 HTTP ${status}로 응답했습니다.`, 422));
         return;
       }
       if (!contentType.includes("text/html") && !contentType.includes("application/xhtml+xml")) {
         response.resume();
-        reject(new LinkPreviewError("HTML 페이지 주소만 미리 볼 수 있습니다.", 415));
+        fail(new LinkPreviewError("HTML 페이지 주소만 미리 볼 수 있습니다.", 415));
         return;
       }
       try {
@@ -100,9 +121,9 @@ async function requestPage(url: URL): Promise<PageResponse> {
         // Async iterator가 조기 반환하면 보통 스트림을 정리하지만, Node 버전 차이와 무관하게
         // </head> 뒤의 큰 본문을 더 받지 않도록 소켓도 명시적으로 닫습니다.
         if (!response.complete) response.destroy();
-        resolve({ body, contentType, location, status });
+        succeed({ body, contentType, location, status });
       } catch (error) {
-        reject(error);
+        fail(error);
       }
     });
 
@@ -110,7 +131,7 @@ async function requestPage(url: URL): Promise<PageResponse> {
       request.destroy(new LinkPreviewError("외부 페이지 응답 시간이 초과됐습니다.", 504));
     });
     request.on("error", (error) => {
-      reject(error instanceof LinkPreviewError
+      fail(error instanceof LinkPreviewError
         ? error
         : new LinkPreviewError("외부 페이지에 연결하지 못했습니다.", 422));
     });
@@ -131,6 +152,8 @@ async function validateMetadataUrl(value: string | null, fallback: string) {
 
 export async function fetchLinkPreview(value: string): Promise<LinkPreview> {
   let url = normalizePreviewUrl(value);
+  // 리다이렉트 체인 전체가 이 시각을 넘기지 못하게 합니다.
+  const deadlineAt = Date.now() + totalDeadlineMs;
   const youtube = await fetchYouTubePreview(url).catch(() => null);
   if (youtube) {
     const image = await validateMetadataUrl(youtube.image, "");
@@ -138,7 +161,8 @@ export async function fetchLinkPreview(value: string): Promise<LinkPreview> {
   }
 
   for (let redirect = 0; redirect <= maximumRedirects; redirect += 1) {
-    const response = await requestPage(url);
+    if (Date.now() >= deadlineAt) throw new LinkPreviewError("외부 페이지 응답 시간이 초과됐습니다.", 504);
+    const response = await requestPage(url, deadlineAt);
     if (response.status >= 300 && response.status < 400) {
       if (!response.location) throw new LinkPreviewError("이동할 주소가 없는 리다이렉트입니다.", 422);
       if (redirect === maximumRedirects) throw new LinkPreviewError("리다이렉트가 너무 많습니다.", 422);

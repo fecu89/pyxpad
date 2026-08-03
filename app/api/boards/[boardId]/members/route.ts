@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { credentialLoginIdValueSchema } from "@/lib/auth/credentials";
 import {
   canAssignBoardRole,
   canManageBoardSettings,
@@ -8,27 +9,28 @@ import {
 } from "@/lib/auth/authorization";
 import { createAuditLogData } from "@/lib/auth/audit";
 import { followBoard, recordBoardActivity } from "@/lib/board/activity";
-import { createEmailLookup, maskEmail } from "@/lib/security/pii-crypto";
-import { decryptUserEmail, toPublicAuthorDTO } from "@/lib/users/repository";
+import { createLoginIdentifierLookup, maskLoginIdentifier } from "@/lib/security/pii-crypto";
+import { decryptUserLoginIdentifier, toPublicAuthorDTO } from "@/lib/users/repository";
 import { apiError, assertSameOrigin } from "@/lib/http";
 import { getPrisma } from "@/lib/prisma";
 import { publishBoardEvent } from "@/lib/realtime/board-events";
 
 const inviteSchema = z.object({
-  email: z.string().trim().email().optional(),
+  loginId: credentialLoginIdValueSchema.optional(),
+  email: z.string().trim().email().transform((value) => value.normalize("NFKC").toLocaleLowerCase("en-US")).optional(),
   userId: z.string().min(1).optional(),
   role: z.enum(["ADMIN", "EDITOR", "MEMBER", "VIEWER"]).default("MEMBER"),
-}).refine((value) => Boolean(value.email || value.userId), "이메일 또는 사용자를 선택해 주세요.");
+}).refine((value) => Boolean(value.loginId || value.email || value.userId), "아이디·카카오 이메일 또는 사용자를 선택해 주세요.");
 
 function memberDTO(member: {
   role: "OWNER" | "ADMIN" | "EDITOR" | "MEMBER" | "VIEWER";
-  user: { id: string; emailEncrypted: string; nameEncrypted: string | null; imageEncrypted: string | null };
+  user: { id: string; loginIdentifierEncrypted: string; nameEncrypted: string | null; imageEncrypted: string | null };
 }) {
   return {
     role: member.role,
     user: {
       ...toPublicAuthorDTO(member.user),
-      email: maskEmail(decryptUserEmail(member.user)),
+      loginIdentifier: maskLoginIdentifier(decryptUserLoginIdentifier(member.user)),
     },
   };
 }
@@ -52,7 +54,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ boa
       orderBy: { joinedAt: "asc" },
       select: {
         role: true,
-        user: { select: { id: true, emailEncrypted: true, nameEncrypted: true, imageEncrypted: true } },
+        user: { select: { id: true, loginIdentifierEncrypted: true, nameEncrypted: true, imageEncrypted: true } },
       },
     });
     return Response.json({ members: members.map(memberDTO) });
@@ -71,7 +73,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ boa
       return Response.json({ error: "멤버 관리 권한이 없습니다." }, { status: 403 });
     }
     const parsed = inviteSchema.safeParse(await request.json());
-    if (!parsed.success) return Response.json({ error: "이메일과 역할을 확인해 주세요." }, { status: 400 });
+    if (!parsed.success) return Response.json({ error: "아이디·카카오 이메일과 역할을 확인해 주세요." }, { status: 400 });
     const canAssignAdmin = access.role === "OWNER"
       || current.role === "SUPER_ADMIN"
       || hasSystemPermission(current, "MANAGE_BOARD_SETTINGS");
@@ -80,12 +82,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ boa
     }
 
     const prisma = getPrisma();
-    // userId는 같은 학교 후보 검색(members/candidates)에서 고른 경우고, email은 기존처럼
-    // 직접 입력한 경우입니다 — 후보 목록의 이메일은 마스킹돼 있어 그대로 되돌려 조회할 수
-    // 없으므로 userId로 바로 찾습니다.
+    // userId는 같은 학교 후보 목록에서 고른 경우고 loginId/email은 직접 입력한 경우입니다.
+    // 후보 목록의 로그인 식별자는 마스킹되므로 선택 결과는 userId로 바로 찾습니다.
+    const directLoginIdentifier = parsed.data.loginId ?? parsed.data.email;
     const target = parsed.data.userId
       ? await prisma.user.findUnique({ where: { id: parsed.data.userId }, select: { id: true, role: true, status: true } })
-      : await prisma.user.findUnique({ where: { emailLookup: createEmailLookup(parsed.data.email!) }, select: { id: true, role: true, status: true } });
+      : await prisma.user.findUnique({ where: { loginIdentifierLookup: createLoginIdentifierLookup(directLoginIdentifier!) }, select: { id: true, role: true, status: true } });
     if (!target || target.status !== "ACTIVE") {
       return Response.json({ error: "활성 PyxPad 사용자를 찾을 수 없습니다." }, { status: 404 });
     }
@@ -102,7 +104,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ boa
         create: { boardId, userId: target.id, role: parsed.data.role },
         select: {
           role: true,
-          user: { select: { id: true, emailEncrypted: true, nameEncrypted: true, imageEncrypted: true } },
+          user: { select: { id: true, loginIdentifierEncrypted: true, nameEncrypted: true, imageEncrypted: true } },
         },
       });
       await transaction.boardAccessRequest.updateMany({

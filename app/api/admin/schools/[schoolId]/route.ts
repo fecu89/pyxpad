@@ -5,38 +5,63 @@ import { apiError, assertSameOrigin } from "@/lib/http";
 import { getPrisma } from "@/lib/prisma";
 import { DEFAULT_SCHOOL_ID } from "@/lib/users/organization";
 
-const renameSchoolSchema = z.object({
-  name: z.string().trim().min(1).max(100),
-});
+const maxGradeByLevel = { ELEMENTARY: 6, MIDDLE: 3, HIGH: 3 } as const;
+
+const updateSchoolSchema = z.object({
+  name: z.string().trim().min(1).max(100).optional(),
+  code: z.string().trim().min(1).max(20).regex(/^[A-Za-z0-9_-]+$/).nullable().optional(),
+  level: z.enum(["ELEMENTARY", "MIDDLE", "HIGH"]).optional(),
+  district: z.string().trim().max(100).nullable().optional(),
+  operatingStatus: z.enum(["OPERATING", "PLANNED", "INACTIVE"]).optional(),
+}).refine((value) => Object.values(value).some((item) => item !== undefined), "변경할 값을 입력해 주세요.");
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ schoolId: string }> }) {
   try {
     assertSameOrigin(request);
     const actor = await requireRole(["SUPER_ADMIN"]);
     const { schoolId } = await params;
-    const parsed = renameSchoolSchema.safeParse(await request.json());
-    if (!parsed.success) return Response.json({ error: "학교 이름을 확인해 주세요." }, { status: 400 });
+    const parsed = updateSchoolSchema.safeParse(await request.json());
+    if (!parsed.success) return Response.json({ error: "학교 정보를 확인해 주세요." }, { status: 400 });
 
     const prisma = getPrisma();
-    const school = await prisma.school.findUnique({ where: { id: schoolId }, select: { id: true, name: true } });
+    const school = await prisma.school.findUnique({ where: { id: schoolId }, select: { id: true, name: true, code: true, level: true, district: true, operatingStatus: true } });
     if (!school) return Response.json({ error: "학교를 찾을 수 없습니다." }, { status: 404 });
-    if (school.name === parsed.data.name) return Response.json({ error: "변경된 이름이 없습니다." }, { status: 409 });
-    const duplicate = await prisma.school.findUnique({ where: { name: parsed.data.name }, select: { id: true } });
-    if (duplicate) return Response.json({ error: "같은 이름의 학교가 이미 있습니다." }, { status: 409 });
+    const next = {
+      name: parsed.data.name ?? school.name,
+      code: parsed.data.code !== undefined ? parsed.data.code?.toUpperCase() || null : school.code,
+      level: parsed.data.level ?? school.level,
+      district: parsed.data.district !== undefined ? parsed.data.district || null : school.district,
+      operatingStatus: parsed.data.operatingStatus ?? school.operatingStatus,
+    };
+    if (Object.entries(next).every(([key, value]) => school[key as keyof typeof school] === value)) return Response.json({ error: "변경된 정보가 없습니다." }, { status: 409 });
+    const duplicate = await prisma.school.findFirst({
+      where: { id: { not: schoolId }, OR: [{ name: next.name }, ...(next.code ? [{ code: next.code }] : [])] },
+      select: { name: true, code: true },
+    });
+    if (duplicate) return Response.json({ error: duplicate.name === next.name ? "같은 이름의 학교가 이미 있습니다." : "같은 학교 코드가 이미 있습니다." }, { status: 409 });
+    if (next.level !== school.level) {
+      const outOfRangeClass = await prisma.schoolGroup.findFirst({
+        where: { schoolId, type: "CLASS", grade: { is: { grade: { gt: maxGradeByLevel[next.level] } } } },
+        select: { name: true },
+      });
+      if (outOfRangeClass) {
+        return Response.json({ error: `${outOfRangeClass.name}을 먼저 정리해야 학교 급별을 변경할 수 있습니다.` }, { status: 409 });
+      }
+    }
 
     const updated = await prisma.$transaction(async (tx) => {
-      const next = await tx.school.update({ where: { id: schoolId }, data: { name: parsed.data.name }, select: { id: true, name: true } });
+      const updatedSchool = await tx.school.update({ where: { id: schoolId }, data: next, select: { id: true, name: true, code: true, level: true, district: true, operatingStatus: true } });
       await tx.adminAuditLog.create({
         data: createAuditLogData({
           actorId: actor.id,
           action: "SCHOOL_UPDATED",
           entityType: "School",
           entityId: schoolId,
-          before: { name: school.name },
-          after: { name: next.name },
+          before: school,
+          after: updatedSchool,
         }),
       });
-      return next;
+      return updatedSchool;
     });
     return Response.json({ school: updated });
   } catch (error) {

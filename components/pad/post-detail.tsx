@@ -3,19 +3,23 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronRight, LoaderCircle, MessageCircle, Pencil, Pin, Trash2 } from "lucide-react";
+import dynamic from "next/dynamic";
+import { ArrowLeft, LoaderCircle, MessageCircle, Pencil, Pin, Trash2 } from "lucide-react";
 import { AttachmentViewer } from "@/components/pad/attachments/attachment-viewer";
 import type { AttachmentMetadataInput, AttachmentViewData } from "@/components/pad/attachments/types";
 import { ThreadedComments } from "@/components/pad/comments/threaded-comments";
 import type { CommentMentionCandidate, ThreadCommentData } from "@/components/pad/comments/types";
 import { PostComposer } from "@/components/pad/post-composer";
+import { PadMoreMenu } from "@/components/pad/pad-more-menu";
 import { ReactionBar } from "@/components/pad/reactions/reaction-bar";
 import { PostCustomFieldsDisplay } from "@/components/pad/settings/post-custom-fields-display";
 import type { PostFieldValues } from "@/components/pad/settings/types";
 import { Avatar } from "@/components/ui/avatar";
-import { Logo } from "@/components/ui/logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { PostBody } from "@/components/pad/post-body";
+// react-markdown + remark/rehype 체인은 이 라우트에서 가장 무거운 의존성입니다. 서버 렌더링은
+// 그대로 두고(본문이 첫 화면의 주 내용이라 지연 렌더하면 깜빡임·CLS가 생김) 클라이언트 청크만
+// 분리해, 댓글·반응·작성기 같은 상호작용 코드의 하이드레이션이 마크다운 파서를 기다리지 않게 합니다.
+const PostBody = dynamic(() => import("@/components/pad/post-body").then((mod) => mod.PostBody));
 import type { PadCapabilities, PadData, PostData, ReactionKey, SectionData } from "@/components/pad/types";
 import { boardRoutePath } from "@/lib/board/route-paths";
 import type { ReactionCounts } from "@/lib/reactions/types";
@@ -192,17 +196,23 @@ export function PostDetailPage({
     <main className="post-page" data-font={board.font} style={pageStyle}>
       <header className="post-page-nav">
         <Link href={boardHref} className="post-page-back" aria-label="패드로 돌아가기"><ArrowLeft size={18} /><span>패드로 돌아가기</span></Link>
-        <Link href="/" className="post-page-brand" aria-label="PyxPad 홈"><Logo size={23} /><b>pyxpad</b></Link>
-        <ThemeToggle />
+        <strong className="post-page-context" title={board.title}>{board.title}</strong>
+        <div className="post-page-nav-actions">
+          <ThemeToggle />
+          {canEdit && (
+            <PadMoreMenu
+              ariaLabel="게시물 관리"
+              rootClassName="post-page-owner-menu"
+              items={[
+                { key: "edit", label: "게시물 수정", icon: <Pencil size={15} />, onClick: () => setEditing(true) },
+                { key: "delete", label: "게시물 삭제", icon: <Trash2 size={15} />, tone: "danger", onClick: () => { void deletePost(); } },
+              ]}
+            />
+          )}
+        </div>
       </header>
 
       <div className="post-page-shell">
-        <nav className="post-page-breadcrumb" aria-label="현재 위치">
-          <Link href={boardHref}>{board.title}</Link>
-          <ChevronRight size={14} aria-hidden />
-          <span>{section.title}</span>
-        </nav>
-
         <div className="post-page-layout">
           <article className="post-page-article">
             <header className="post-page-heading">
@@ -222,14 +232,14 @@ export function PostDetailPage({
               <PostBody body={post.body || "내용이 아직 없어요."} />
               <PostCustomFieldsDisplay config={board.postFieldConfig} values={readCustomValues(post)} />
               {attachments.length > 0 && <AttachmentViewer attachments={attachments} canDownload={capabilities.downloadAttachments} canEdit={canEdit} movePending={movePending} onDelete={deleteAttachment} onMove={moveAttachment} onUpdateMetadata={updateAttachmentMetadata} />}
-              <ReactionBar counts={post.reactionCounts} viewerReactions={post.viewerReactions} policy={board.reactionPolicy} canReact={capabilities.react} onToggle={toggleReaction} />
-              <div className="detail-stats"><span><MessageCircle size={16} /> 댓글 {Math.max(post.commentCount, comments.length)}</span></div>
-              {canEdit && <div className="detail-owner-actions"><button type="button" className="button soft" onClick={() => setEditing(true)}><Pencil size={15} />수정</button><button type="button" className="button danger" onClick={deletePost}><Trash2 size={15} />삭제</button></div>}
+              <div className="post-page-reactions">
+                <ReactionBar counts={post.reactionCounts} viewerReactions={post.viewerReactions} policy={board.reactionPolicy} canReact={capabilities.react} onToggle={toggleReaction} />
+              </div>
             </div>
           </article>
 
           <aside className="comments-panel post-page-comments">
-            <header><MessageCircle size={18} /><b>함께 나눈 이야기</b><span>{comments.length}</span></header>
+            <header><MessageCircle size={18} /><b>댓글</b><span>{Math.max(post.commentCount, comments.length)}</span></header>
             <div className="comments-scroll">
               {loading && !comments.length ? <div className="comments-empty"><LoaderCircle className="spin" />댓글을 불러오는 중</div> : <ThreadedComments comments={comments} currentUserId={currentUserId} canComment={capabilities.comment} canEditOwn={capabilities.editOwnContent} canModerate={capabilities.moderateComments} mentionCandidates={mentionCandidates} hasMore={hasMoreComments} loadingMore={loadingMoreComments} onLoadMore={loadMoreComments} onCreate={createComment} onUpdate={updateComment} onDelete={deleteComment} />}
               {error && <p className="form-error compact" role="alert">{error}</p>}

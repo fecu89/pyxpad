@@ -6,7 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { requestJson } from "@/lib/api-client";
 import styles from "@/components/pad/settings/settings.module.css";
 
-type Candidate = { id: string; role: string; name: string | null; email: string };
+type Candidate = { id: string; role: string; name: string | null; loginIdentifier: string };
 
 const roleLabel: Record<string, string> = {
   STUDENT: "학생",
@@ -17,7 +17,7 @@ const roleLabel: Record<string, string> = {
 
 // 예전에는 window.prompt로 이메일을 아무거나 받아서 초대했습니다 — 누가 이미 있는지도 안
 // 보이고, 다른 학교 사람도 그대로 초대됐습니다(사용자 피드백 "최악이다"). 같은 학교 소속만
-// 검색해 보여주고(members/candidates, 교사 이상만 호출 가능), 목록에서 바로 눌러 추가합니다.
+// 검색해 보여주고(교사는 같은 학교, 학생 소유자는 같은 학급), 목록에서 바로 눌러 추가합니다.
 export function MemberInvitePicker({ boardId, onInvited }: { boardId: string; onInvited: () => void | Promise<void> }) {
   const [query, setQuery] = useState("");
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -64,7 +64,7 @@ export function MemberInvitePicker({ boardId, onInvited }: { boardId: string; on
     <div className={styles.inviteBox}>
       <label className={styles.inviteSearch}>
         <Search size={15} />
-        <input className={styles.inviteSearchInput} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="같은 학교 구성원 이름·이메일 검색" />
+        <input className={styles.inviteSearchInput} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="같은 학교·학급 구성원 검색" />
       </label>
       {note && <p className={styles.note}>{note}</p>}
       {error && <p className="form-error compact">{error}</p>}
@@ -76,8 +76,8 @@ export function MemberInvitePicker({ boardId, onInvited }: { boardId: string; on
         <ul className={styles.inviteList}>
           {candidates.map((candidate) => (
             <li key={candidate.id}>
-              <Avatar name={candidate.name} email={candidate.email} size="small" />
-              <span className={styles.candidateCopy}><b>{candidate.name || "이름 없음"}</b><small>{candidate.email} · {roleLabel[candidate.role] ?? candidate.role}</small></span>
+              <Avatar name={candidate.name} identifier={candidate.loginIdentifier} size="small" />
+              <span className={styles.candidateCopy}><b>{candidate.name || "이름 없음"}</b><small>{candidate.loginIdentifier} · {roleLabel[candidate.role] ?? candidate.role}</small></span>
               <button type="button" className="button soft small" disabled={invitingId === candidate.id} onClick={() => invite(candidate)}>
                 {invitingId === candidate.id ? <LoaderCircle size={13} className="spin" /> : <UserPlus size={13} />}
                 추가

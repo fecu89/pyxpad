@@ -8,6 +8,7 @@ import { maxUploadBytes, validateUploadedFile } from "@/lib/files/validation";
 import { apiError, assertSameOrigin } from "@/lib/http";
 import { getPrisma } from "@/lib/prisma";
 import { encryptUserPii } from "@/lib/security/pii-crypto";
+import { assertRateLimit } from "@/lib/security/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,14 @@ export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
     const user = await requireActiveUser();
+    // 프로필 사진도 sharp 변환을 타므로 반복 업로드로 이미지 처리 슬롯을 점유하지 못하게 합니다.
+    assertRateLimit(request, {
+      scope: "avatar-upload",
+      userId: user.id,
+      windowMs: 10 * 60_000,
+      maxAttempts: 20,
+      message: "프로필 사진을 너무 자주 변경했습니다. 잠시 후 다시 시도해 주세요.",
+    });
     const directory = getAvatarDirectory(user.id);
     const uploaded = await streamMultipartFile(request, directory, maxUploadBytes());
     incomingPath = uploaded.temporaryPath;

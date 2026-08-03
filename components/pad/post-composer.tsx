@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useState, type ClipboardEvent, type DragEvent, type FormEvent } from "react";
-import { Link2, LoaderCircle, Paperclip, Send, Sparkles, Video, X } from "lucide-react";
+import { useCallback, useId, useRef, useState, type ClipboardEvent, type DragEvent, type FormEvent } from "react";
+import { Camera, FileText, Film, Image as ImageIcon, Link2, LoaderCircle, Mic, Paperclip, SlidersHorizontal, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { attachmentAccept, prepareAttachmentFiles } from "@/components/pad/attachments/file-rules";
 import { MediaCapture } from "@/components/pad/attachments/media-capture";
 import { UploadQueueList } from "@/components/pad/attachments/upload-queue-list";
 import { useAttachmentUploadQueue } from "@/components/pad/attachments/use-attachment-upload-queue";
-import { DraftRecovery, DraftSaveState } from "@/components/pad/composer/draft-status";
+import { DraftRecovery } from "@/components/pad/composer/draft-status";
 import { LinkPreviewInput } from "@/components/pad/composer/link-preview-input";
 import { usePostDraft } from "@/components/pad/composer/use-post-draft";
 import { PostCustomFieldsInput } from "@/components/pad/settings/post-custom-fields-input";
@@ -38,6 +38,7 @@ export function PostComposer({ open, onClose, sectionId, sectionTitle, fieldConf
   post?: PostData;
 }) {
   const router = useRouter();
+  const formId = useId();
   const queue = useAttachmentUploadQueue({ concurrency: 3 });
   const draft = usePostDraft({
     scope: post ? `post:${post.id}` : `section:${sectionId}:new`,
@@ -48,16 +49,21 @@ export function PostComposer({ open, onClose, sectionId, sectionTitle, fieldConf
   const [customValues, setCustomValues] = useState<PostFieldValues>(() => initialCustomValues(post));
   const [links, setLinks] = useState<LinkPreview[]>([]);
   const [captureOpen, setCaptureOpen] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [moreToolsOpen, setMoreToolsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
   const [fileError, setFileError] = useState("");
   const [savedTarget, setSavedTarget] = useState<{ id: string; version: number } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const closeComposer = useCallback(() => {
     queue.reset();
     setLinks([]);
     setCaptureOpen(false);
+    setLinkOpen(false);
+    setMoreToolsOpen(false);
     setError("");
     setFileError("");
     setDragging(false);
@@ -80,10 +86,41 @@ export function PostComposer({ open, onClose, sectionId, sectionTitle, fieldConf
     if (pasted.length) addFiles(pasted);
   }
 
-  function handleDrop(event: DragEvent<HTMLLabelElement>) {
+  function handleDrop(event: DragEvent<HTMLElement>) {
     event.preventDefault();
     setDragging(false);
     addFiles(Array.from(event.dataTransfer.files));
+  }
+
+  function openFilePicker(accept = attachmentAccept) {
+    const input = fileInputRef.current;
+    if (!input) return;
+    input.accept = accept;
+    input.click();
+  }
+
+  function toggleCapture() {
+    setCaptureOpen((current) => !current);
+    setLinkOpen(false);
+    setMoreToolsOpen(false);
+  }
+
+  function toggleLinks() {
+    setLinkOpen((current) => !current);
+    setCaptureOpen(false);
+    setMoreToolsOpen(false);
+  }
+
+  function toggleMoreTools() {
+    setMoreToolsOpen((current) => !current);
+    setCaptureOpen(false);
+    setLinkOpen(false);
+  }
+
+  function closeToolPanels() {
+    setCaptureOpen(false);
+    setLinkOpen(false);
+    setMoreToolsOpen(false);
   }
 
   function addLinks(previews: LinkPreview[]) {
@@ -190,44 +227,44 @@ export function PostComposer({ open, onClose, sectionId, sectionTitle, fieldConf
     ...(post?.attachments.flatMap((attachment) => attachment.type === "LINK" && attachment.externalUrl ? [attachment.externalUrl] : []) ?? []),
     ...links.map((link) => link.url),
   ];
+  const submitLabel = submitting ? (post ? "수정 중" : "게시 중") : savedTarget ? "다시 게시하기" : post ? "수정하기" : "게시하기";
 
   return (
-    <Modal open={open} onClose={closeComposer} title={post ? "게시물 다듬기" : "새로운 생각 나누기"} description={`${sectionTitle}에 ${post ? "내용을 반영해요." : "글을 추가해요."}`} className="composer-modal">
-      <form className="composer-form" onSubmit={submit} onPaste={handlePaste}>
-        <div className="composer-tip"><Sparkles size={16} /><span>작성 내용은 이 브라우저에 자동 저장됩니다.</span></div>
-        {draft.availableDraft && <DraftRecovery savedAt={draft.availableDraft.savedAt} onRestore={draft.restoreDraft} onDiscard={draft.discardDraft} />}
-        {fieldConfig.title.visible && <label>제목 {fieldConfig.title.required ? <span>필수</span> : <span>선택</span>}<input value={draft.value.title} onChange={(event) => draft.setValue((current) => ({ ...current, title: event.target.value }))} placeholder={fieldConfig.title.placeholder} maxLength={200} required={fieldConfig.title.required} autoFocus /></label>}
-        {fieldConfig.body.visible && <label>내용<textarea value={draft.value.body} onChange={(event) => draft.setValue((current) => ({ ...current, body: event.target.value }))} placeholder={fieldConfig.body.placeholder} rows={8} maxLength={20000} required={fieldConfig.body.required} /></label>}
-        <PostCustomFieldsInput config={fieldConfig} values={customValues} onChange={setCustomValues} />
-        {post && <label className="check-label"><input type="checkbox" name="isPinned" defaultChecked={post.isPinned} /> 섹션 위에 고정하기</label>}
-        {fieldConfig.attachment.visible && <>
-          <label className={`file-drop ${dragging ? "dragging" : ""}`} onDragEnter={(event) => { event.preventDefault(); setDragging(true); }} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; }} onDragLeave={(event) => { if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setDragging(false); }} onDrop={handleDrop}>
-            <input type="file" multiple accept={attachmentAccept} onChange={(event) => { addFiles(Array.from(event.target.files ?? [])); event.currentTarget.value = ""; }} />
-            <span className="file-icon"><Paperclip size={19} /></span>
-            <span><b>{dragging ? "여기에 놓아 첨부하세요" : "클릭하거나 파일을 끌어놓으세요"}</b><small>이미지는 WebP 최적화 · 영상·음성 재생 지원 · 최대 30MB</small></span>
-          </label>
-          <div className="composer-attachment-tools"><button type="button" className="button soft" onClick={() => setCaptureOpen((current) => !current)}><Video size={15} />촬영·녹음</button></div>
-          {captureOpen && <MediaCapture onCapture={(file) => addFiles([file])} onClose={() => setCaptureOpen(false)} />}
+    <Modal
+      open={open}
+      onClose={closeComposer}
+      title={post ? `${sectionTitle} 게시물 수정` : `${sectionTitle}에 게시물 작성`}
+      className="composer-modal"
+      variant="composer"
+      headerAction={<button type="submit" form={formId} className="button primary composer-header-submit" disabled={submitting || queue.isUploading}>{submitting && <LoaderCircle className="spin" size={16} />}{submitLabel}</button>}
+    >
+      <form id={formId} className="composer-form" onSubmit={submit} onPaste={handlePaste}>
+        <div className="composer-editor-scroll" onPointerDown={closeToolPanels} onFocusCapture={closeToolPanels}>
+          {draft.availableDraft && <DraftRecovery savedAt={draft.availableDraft.savedAt} onRestore={draft.restoreDraft} onDiscard={draft.discardDraft} />}
+          {fieldConfig.title.visible && <label className="composer-title-field">제목 {fieldConfig.title.required ? <span>필수</span> : <span>선택</span>}<input value={draft.value.title} onChange={(event) => draft.setValue((current) => ({ ...current, title: event.target.value }))} placeholder={fieldConfig.title.placeholder} maxLength={200} required={fieldConfig.title.required} autoFocus /></label>}
+          {fieldConfig.body.visible && <label className="composer-body-field">내용<textarea value={draft.value.body} onChange={(event) => draft.setValue((current) => ({ ...current, body: event.target.value }))} placeholder={fieldConfig.body.placeholder} rows={12} maxLength={20000} required={fieldConfig.body.required} /></label>}
+          <PostCustomFieldsInput config={fieldConfig} values={customValues} onChange={setCustomValues} />
+          {post && <label className="check-label"><input type="checkbox" name="isPinned" defaultChecked={post.isPinned} /> 섹션 위에 고정하기</label>}
+          {fieldConfig.attachment.visible && <>
           <UploadQueueList items={queue.items} onCancel={queue.cancel} onRemove={queue.remove} onRetry={(id) => { const targetId = savedTarget?.id ?? post?.id; if (targetId) void queue.retry(targetId, id); }} />
-          <section className="composer-links">
-            <header><span><Link2 size={15} /><b>링크 첨부</b></span><small>{links.length ? `${links.length}개 추가 대기` : "여러 개를 한 번에"}</small></header>
-            <LinkPreviewInput selectedUrls={selectedLinkUrls} remainingSlots={remainingLinkSlots} onSelect={addLinks} />
             {links.length > 0 && (
-              <ul aria-label="추가할 링크">
-                {links.map((link) => (
-                  <li key={link.url}>
-                    <span className="composer-link-icon"><Link2 size={14} /></span>
-                    <span className="composer-link-copy"><b>{link.title}</b><small>{link.siteName || linkHostname(link.url)}</small></span>
-                    <button type="button" onClick={() => setLinks((current) => current.filter((item) => item.url !== link.url))} aria-label={`${link.title} 링크 제거`}><X size={13} /></button>
-                  </li>
-                ))}
-              </ul>
+              <section className="composer-links composer-selected-links"><header><span><Link2 size={15} /><b>추가할 링크</b></span><small>{links.length}개</small></header><ul aria-label="추가할 링크">{links.map((link) => <li key={link.url}><span className="composer-link-icon"><Link2 size={14} /></span><span className="composer-link-copy"><b>{link.title}</b><small>{link.siteName || linkHostname(link.url)}</small></span><button type="button" onClick={() => setLinks((current) => current.filter((item) => item.url !== link.url))} aria-label={`${link.title} 링크 제거`}><X size={13} /></button></li>)}</ul></section>
             )}
-          </section>
-        </>}
-        {fileError && <p className="form-error" role="alert">{fileError}</p>}
-        {error && <p className="form-error" role="alert">{error}</p>}
-        <footer className="modal-actions"><DraftSaveState lastSavedAt={draft.lastSavedAt} storageError={draft.storageError} /><button type="button" className="button ghost" onClick={closeComposer}>닫기</button><button className="button primary" disabled={submitting || queue.isUploading}>{submitting ? <LoaderCircle className="spin" size={17} /> : <Send size={17} />}{submitting ? "저장·업로드 중" : savedTarget ? "첨부 재시도·완료" : post ? "수정 완료" : "게시하기"}</button></footer>
+          </>}
+          {fileError && <p className="form-error" role="alert">{fileError}</p>}
+          {error && <p className="form-error" role="alert">{error}</p>}
+        </div>
+
+        {fieldConfig.attachment.visible && (captureOpen || linkOpen || moreToolsOpen) && <section className="composer-tool-panel" aria-label="첨부 도구 옵션">
+          {captureOpen && <MediaCapture onCapture={(file) => addFiles([file])} onClose={() => setCaptureOpen(false)} />}
+          {linkOpen && <section className="composer-links"><header><span><Link2 size={15} /><b>링크 첨부</b></span><small>{links.length ? `${links.length}개 추가 대기` : "여러 개를 한 번에"}</small></header><LinkPreviewInput selectedUrls={selectedLinkUrls} remainingSlots={remainingLinkSlots} onSelect={addLinks} /></section>}
+          {moreToolsOpen && <div className="composer-more-tools"><button type="button" onClick={() => openFilePicker(".mp3,.m4a,.wav,.ogg")}><Mic size={20} /><span><b>음성 파일</b><small>MP3, M4A, WAV, OGG</small></span></button><button type="button" onClick={() => openFilePicker(".mp4,.webm,.mov")}><Film size={20} /><span><b>영상 파일</b><small>MP4, WebM, MOV</small></span></button><button type="button" onClick={() => openFilePicker(".pdf,.docx,.pptx,.xlsx,.txt,.zip,.hwp,.hwpx")}><FileText size={20} /><span><b>문서 파일</b><small>PDF, Office, HWP, ZIP</small></span></button><div className={`composer-drop-target ${dragging ? "dragging" : ""}`} onDragEnter={(event) => { event.preventDefault(); setDragging(true); }} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; }} onDragLeave={(event) => { if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setDragging(false); }} onDrop={handleDrop}><Paperclip size={18} /><span><b>{dragging ? "여기에 놓으세요" : "파일 끌어놓기"}</b><small>첨부 파일은 최대 30MB</small></span></div></div>}
+        </section>}
+
+        {fieldConfig.attachment.visible && <input ref={fileInputRef} type="file" multiple accept={attachmentAccept} className="composer-hidden-file" onChange={(event) => { addFiles(Array.from(event.target.files ?? [])); event.currentTarget.value = ""; }} />}
+        <div className="composer-bottom">
+          {fieldConfig.attachment.visible && <div className="composer-tool-dock" role="toolbar" aria-label="게시물 첨부 도구"><button type="button" onClick={() => openFilePicker()}><Upload size={21} /><span>파일</span></button><button type="button" onClick={() => openFilePicker(".jpg,.jpeg,.png,.webp,.gif")}><ImageIcon size={21} /><span>이미지</span></button><button type="button" data-active={captureOpen} aria-pressed={captureOpen} onClick={toggleCapture}><Camera size={21} /><span>촬영</span></button><button type="button" data-active={linkOpen} aria-pressed={linkOpen} onClick={toggleLinks}><Link2 size={21} /><span>링크</span></button><button type="button" data-active={moreToolsOpen} aria-pressed={moreToolsOpen} onClick={toggleMoreTools}><SlidersHorizontal size={21} /><span>모든 도구</span></button></div>}
+        </div>
       </form>
     </Modal>
   );

@@ -104,7 +104,7 @@ export function NotificationBell() {
       router.push("/admin?tab=approvals");
       router.refresh();
     } else if (item.type === "TEACHER_APPROVAL_APPROVED") {
-      router.push("/");
+      router.push("/dashboard");
       router.refresh();
     } else if (item.type === "TEACHER_APPROVAL_REJECTED") {
       router.push("/onboarding");

@@ -3,8 +3,10 @@
 이 폴더는 PyxPad 구현에서 `scripts` 영역을 담당합니다.
 
 - `backfill-user-pii.ts`: 기존 사용자 평문 프로필을 AES-GCM 암호문과 이메일 HMAC으로 백필합니다. `--dry-run`으로 DB 변경 없이 검증할 수 있으며 원문 개인정보를 출력하지 않습니다.
+- `migrate-credential-login-ids.ts`: `loginIdentifier*` 컬럼명 마이그레이션 뒤 기존 이메일·비밀번호 계정의 이메일 로컬 부분을 영문·숫자 로그인 아이디로 옮깁니다. 카카오 이메일 계정은 건드리지 않으며 충돌 시 사용자 ID 일부를 붙이고 기존 세션을 해제합니다. `--dry-run`을 지원합니다.
 - `test-pii-crypto.ts`: 무작위 IV, HMAC 정규화, AAD 격리, 변조 탐지와 키 버전 복호화를 검증합니다. 키나 개인정보 원문은 출력하지 않습니다.
-- `verify-security-data.ts`: 평문 컬럼 제거, 활성 전체관리자, 암호화 누락, 학생의 금지된 보드 역할과 시스템 권한 대상을 원문 출력 없이 검증합니다. 특정 제목의 운영 보드 존재 여부에는 의존하지 않으며, 비공개 보드의 소유자·멤버 접근은 `verify-board-access-policy.ts`의 임시 fixture가 검증합니다.
+- `verify-security-data.ts`: 평문 컬럼 제거, 활성 전체관리자, 로그인 식별자 암호문↔HMAC 일치와 일반 `loginId`/카카오 이메일 형식, 학생의 10개 소유 한도·금지된 타인 패드 역할, 시스템 권한 대상을 원문 출력 없이 검증합니다. 특정 제목의 운영 보드 존재 여부에는 의존하지 않으며, 비공개 보드의 소유자·멤버 접근은 `verify-board-access-policy.ts`의 임시 fixture가 검증합니다.
+- `verify-credential-auth.ts`: 실제 HTTP에서 일반 `loginId` 형식·예약값·대소문자 중복을 확인하고 계정을 잠시 만든 뒤 scrypt 해시, NextAuth Credentials callback, 원문을 숨긴 JWT 세션까지 검증하고 fixture를 정리합니다.
 - `verify-admin-http.ts`: 짧은 검증용 전체관리자 세션과 임시 학교·반·부서·회원 11명을 만들어 비로그인 401, 학생 403, 10+1 오프셋 페이지네이션, 일괄 수정, 소속 CRUD·인원수·감사 로그, 회원 소프트 삭제를 실제 HTTP와 DB 양쪽에서 확인한 뒤 모두 정리합니다. 홈 SSR과 학생의 직접 보드 생성 차단도 함께 검사하며 토큰이나 사용자 ID는 출력하지 않습니다.
 - `verify-board-access-policy.ts`: 임시 사용자·보드를 생성해 발견 범위, 방문자 권한, 로그인 요구, 멤버십과 소유자 조합 12개를 DAL에서 검증하고 즉시 정리합니다. 과거 `LINK/WRITER/loginRequired=true` 데이터도 익명 읽기는 허용하면서 비멤버의 글·댓글·반응·파일·기존 콘텐츠 수정은 차단하는지, 새 LINK 저장값이 `READER/loginRequired=false`로 정규화되는지도 확인합니다. `server-only` 모듈을 Node에서 검사하므로 `npm run verify:access`의 `react-server` 조건으로 실행합니다.
 - `verify-seo-metadata.ts`: 임시 LINK·PUBLIC·PRIVATE·비밀번호 보호 패드를 만들어 LINK/PUBLIC의 제목·설명 노출, LINK noindex, PUBLIC index, 보호 패드의 제목 비노출과 기본 썸네일 전환을 검사합니다. 공개 패드의 OG 입력이 같으면 이미지 URL 버전이 유지되고 표시 값이 바뀌면 버전이 달라지는지도 확인합니다. Pretendard와 logo.svg를 포함한 보드/기본 OG 이미지도 실제 PNG 바이트로 렌더링한 뒤 fixture를 정리합니다. `npm run verify:seo`로 실행합니다.

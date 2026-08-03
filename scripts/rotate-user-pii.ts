@@ -2,9 +2,9 @@ import { config } from "dotenv";
 import { getPrisma } from "../lib/prisma";
 import {
   decryptOptionalUserPii,
-  decryptUserPii,
+  decryptUserLoginIdentifier,
   encryptOptionalUserPii,
-  encryptUserPii,
+  encryptUserLoginIdentifier,
 } from "../lib/security/pii-crypto-core";
 
 config({ path: ".env.local", quiet: true });
@@ -23,20 +23,20 @@ async function main() {
       orderBy: { id: "asc" },
       take: BATCH_SIZE,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-      select: { id: true, emailEncrypted: true, nameEncrypted: true, imageEncrypted: true },
+      select: { id: true, loginIdentifierEncrypted: true, nameEncrypted: true, imageEncrypted: true },
     });
     if (!users.length) break;
 
     for (const user of users) {
-      const email = decryptUserPii(user.id, "email", user.emailEncrypted);
+      const loginIdentifier = decryptUserLoginIdentifier(user.id, user.loginIdentifierEncrypted);
       const name = decryptOptionalUserPii(user.id, "name", user.nameEncrypted);
       const image = decryptOptionalUserPii(user.id, "image", user.imageEncrypted);
       const next = {
-        emailEncrypted: encryptUserPii(user.id, "email", email),
+        loginIdentifierEncrypted: encryptUserLoginIdentifier(user.id, loginIdentifier),
         nameEncrypted: encryptOptionalUserPii(user.id, "name", name),
         imageEncrypted: encryptOptionalUserPii(user.id, "image", image),
       };
-      if (decryptUserPii(user.id, "email", next.emailEncrypted) !== email) throw new Error("이메일 재암호화 검증에 실패했습니다.");
+      if (decryptUserLoginIdentifier(user.id, next.loginIdentifierEncrypted) !== loginIdentifier) throw new Error("로그인 식별자 재암호화 검증에 실패했습니다.");
       if (decryptOptionalUserPii(user.id, "name", next.nameEncrypted) !== name) throw new Error("이름 재암호화 검증에 실패했습니다.");
       if (decryptOptionalUserPii(user.id, "image", next.imageEncrypted) !== image) throw new Error("프로필 재암호화 검증에 실패했습니다.");
       if (!dryRun) await prisma.user.update({ where: { id: user.id }, data: next });

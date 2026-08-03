@@ -1,63 +1,54 @@
 import "server-only";
 
-type Bucket = { count: number; resetAt: number };
+import { createRateLimiter, type RateLimitDecision } from "@/lib/security/rate-limit-core";
+import { rateLimitIdentity, trustedClientIdentifier } from "@/lib/security/request-identity";
 
-const SWEEP_INTERVAL_MS = 5 * 60_000;
-const MAX_ENTRIES = 5_000;
+export { createRateLimiter };
+export type { RateLimitDecision };
 
-// 고정 윈도 인메모리 rate limiter. 키가 계속 늘기만 하면(예: 공격자가 매 요청 다른 값을
-// 자처하는 경우) Map이 무한정 쌓여 실질적인 메모리 누수·DoS가 되므로, 주기적으로 만료된
-// 항목을 청소하고 그래도 넘치면 가장 오래 전에 등록된 항목부터 강제로 비웁니다. 프로세스
-// 단일 인스턴스 운영 전제(structure.md §8)를 벗어나 다중 인스턴스로 확장하면 인스턴스별로
-// 따로 세게 되므로 Redis 등 공유 저장소로 옮겨야 합니다.
-export function createRateLimiter(options: { windowMs: number; maxAttempts: number }) {
-  const attemptsByKey = new Map<string, Bucket>();
-
-  function sweep() {
-    const now = Date.now();
-    for (const [key, bucket] of attemptsByKey) {
-      if (bucket.resetAt <= now) attemptsByKey.delete(key);
-    }
-    const overflow = attemptsByKey.size - MAX_ENTRIES;
-    if (overflow > 0) {
-      let removed = 0;
-      for (const key of attemptsByKey.keys()) {
-        if (removed >= overflow) break;
-        attemptsByKey.delete(key);
-        removed += 1;
-      }
-    }
+export class RateLimitError extends Error {
+  constructor(message: string, public readonly retryAfterSeconds: number) {
+    super(message);
+    this.name = "RateLimitError";
   }
-
-  const timer = setInterval(sweep, SWEEP_INTERVAL_MS);
-  timer.unref?.();
-
-  return {
-    consume(key: string) {
-      const now = Date.now();
-      const current = attemptsByKey.get(key);
-      if (!current || current.resetAt <= now) {
-        attemptsByKey.set(key, { count: 1, resetAt: now + options.windowMs });
-        return true;
-      }
-      if (current.count >= options.maxAttempts) return false;
-      current.count += 1;
-      return true;
-    },
-  };
 }
 
-// 로그인 여부와 무관하게 호출되는 공개 엔드포인트(비밀번호 확인, 점검용 로그인 등)에서
-// userId 대신 요청자 IP로 시도 횟수를 제한할 때 씁니다.
+// 로그인 여부와 무관하게 호출되는 공개 엔드포인트에서 userId 대신 요청자 IP로 시도 횟수를
+// 제한할 때 씁니다. 프록시가 검증하지 않은 전달 헤더를 바로 믿으면 공격자가 키를 계속 바꿔
+// 제한을 우회할 수 있으므로 인증 경로와 같은 신뢰 정책을 사용합니다.
 export function clientIp(request: Request) {
-  const cfIp = request.headers.get("cf-connecting-ip");
-  if (cfIp) return cfIp.trim();
-  // X-Forwarded-For는 각 프록시 홉이 자기 앞단에서 받은 값을 이어붙이는 방식이라, 맨 앞(첫
-  // 홉)은 클라이언트가 스스로 써 보낼 수 있는 값입니다. 그대로 믿으면 매 요청마다 다른 값을
-  // 채워보내 rate limit 키를 무한히 만들어낼 수 있으므로, 우리 서버 바로 앞 프록시가 붙였을
-  // 마지막 값을 씁니다.
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (!forwarded) return "unknown";
-  const hops = forwarded.split(",").map((part) => part.trim()).filter(Boolean);
-  return hops.at(-1) ?? "unknown";
+  return trustedClientIdentifier(request.headers);
+}
+
+// 라우트별 제한기는 모듈 스코프에 한 번만 만들어야 버킷이 유지됩니다. 라우트 파일마다
+// createRateLimiter를 선언하는 대신 이름으로 한 번만 만들어 재사용합니다.
+const limitersByName = new Map<string, ReturnType<typeof createRateLimiter>>();
+
+function limiterFor(name: string, windowMs: number, maxAttempts: number) {
+  const existing = limitersByName.get(name);
+  if (existing) return existing;
+  const created = createRateLimiter({ windowMs, maxAttempts });
+  limitersByName.set(name, created);
+  return created;
+}
+
+/**
+ * 비용이 큰 개별 엔드포인트에 좁은 제한을 겁니다.
+ *
+ * 키는 로그인 사용자면 계정, 아니면 "신뢰할 수 있는 IP"입니다. 신뢰할 수 있는 IP를 얻을 수 없는
+ * 배포(TRUST_* 미설정)에서는 모든 익명 요청이 한 버킷으로 묶여 공격자 한 명이 전체 익명
+ * 사용자를 함께 막아버리므로, 그때는 익명 요청에 제한을 걸지 않고 통과시킵니다. 그 구간의
+ * 방어는 WAF·프록시 계층 몫입니다(structure.md §8).
+ */
+export function assertRateLimit(
+  request: Request,
+  options: { scope: string; userId?: string | null; windowMs: number; maxAttempts: number; message?: string },
+) {
+  const identity = rateLimitIdentity(request.headers, options.userId ?? null);
+  if (!identity) return;
+  const limiter = limiterFor(`${options.scope}:${options.windowMs}:${options.maxAttempts}`, options.windowMs, options.maxAttempts);
+  const decision = limiter.check(`${options.scope}|${identity}`);
+  if (!decision.allowed) {
+    throw new RateLimitError(options.message ?? "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요.", decision.retryAfterSeconds);
+  }
 }

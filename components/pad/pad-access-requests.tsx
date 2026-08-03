@@ -13,7 +13,7 @@ type AccessRequestSummary = {
   user: {
     id: string;
     name: string | null;
-    email: string;
+    loginIdentifier: string;
     image: string | null;
   };
 };
@@ -84,14 +84,14 @@ export function PadAccessRequests({ boardId }: { boardId: string }) {
         <div className="request-list">
           {requests.map((request) => (
             <article key={request.id}>
-              <Avatar name={request.user.name} email={request.user.email} image={request.user.image} />
+              <Avatar name={request.user.name} identifier={request.user.loginIdentifier} image={request.user.image} />
               <span className="request-user">
                 <b>{request.user.name || "이름 없음"}</b>
-                <small>{request.user.email}</small>
+                <small>{request.user.loginIdentifier}</small>
               </span>
               <div className="request-actions">
-                <button type="button" className="request-approve" onClick={() => decide(request.id, "APPROVE")} disabled={actionId === request.id} aria-label={(request.user.name || request.user.email) + " 접근 승인"}><Check size={15} />승인</button>
-                <button type="button" className="request-reject" onClick={() => decide(request.id, "REJECT")} disabled={actionId === request.id} aria-label={(request.user.name || request.user.email) + " 접근 거절"}><X size={15} />거절</button>
+                <button type="button" className="request-approve" onClick={() => decide(request.id, "APPROVE")} disabled={actionId === request.id} aria-label={(request.user.name || request.user.loginIdentifier) + " 접근 승인"}><Check size={15} />승인</button>
+                <button type="button" className="request-reject" onClick={() => decide(request.id, "REJECT")} disabled={actionId === request.id} aria-label={(request.user.name || request.user.loginIdentifier) + " 접근 거절"}><X size={15} />거절</button>
               </div>
             </article>
           ))}

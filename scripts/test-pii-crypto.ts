@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
 import { config } from "dotenv";
 import {
-  createEmailLookup,
+  createLoginIdentifierLookup,
   decryptUserPii,
   encryptUserPii,
 } from "../lib/security/pii-crypto-core";
@@ -19,8 +19,8 @@ const second = encryptUserPii(userId, "email", email);
 assert.notEqual(first, second, "무작위 IV 때문에 같은 원문도 다른 암호문이어야 합니다.");
 assert.equal(decryptUserPii(userId, "email", first), email);
 assert.throws(() => decryptUserPii(anotherUserId, "email", first), /복호화/);
-assert.equal(createEmailLookup(" Teacher@Example.com "), createEmailLookup("teacher@example.com"));
-assert.notEqual(createEmailLookup("teacher@example.com"), createEmailLookup("student@example.com"));
+assert.equal(createLoginIdentifierLookup(" Teacher@Example.com "), createLoginIdentifierLookup("teacher@example.com"));
+assert.notEqual(createLoginIdentifierLookup("teacher@example.com"), createLoginIdentifierLookup("student@example.com"));
 
 const tampered = first.split(":");
 tampered[3] = `${tampered[3][0] === "A" ? "B" : "A"}${tampered[3].slice(1)}`;

@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useState } from "react";
+import { useEffect, useRef, useState, type UIEvent } from "react";
 import { useRouter } from "next/navigation";
 import { closestCenter, DndContext, DragOverlay, KeyboardSensor, MouseSensor, pointerWithin, TouchSensor, useSensor, useSensors, type CollisionDetection, type DragEndEvent, type DragOverEvent, type DragStartEvent } from "@dnd-kit/core";
 import { arrayMove, horizontalListSortingStrategy, SortableContext, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
@@ -70,6 +70,7 @@ export function SectionsBoardView({
   setLocalSections,
   setError,
   onAddSection,
+  onActiveSectionChange,
 }: {
   boardId: string;
   sortMode: PadSortMode;
@@ -89,9 +90,11 @@ export function SectionsBoardView({
   setLocalSections: (updater: SectionData[] | null | ((current: SectionData[] | null) => SectionData[] | null)) => void;
   setError: (message: string) => void;
   onAddSection: () => void;
+  onActiveSectionChange?: (sectionId: string) => void;
 }) {
   const router = useRouter();
   const [activeDrag, setActiveDrag] = useState<{ type: "post"; postId: string } | { type: "section"; sectionId: string } | null>(null);
+  const scrollFrameRef = useRef<number | null>(null);
   // 마우스는 거리 기준(8px 움직이면 바로 드래그)으로 즉각 반응하게 두고, 터치는 지연 기준(누른 채
   // 250ms 유지)으로 분리합니다. 터치에서 거리 기준을 쓰면 스크롤하려고 살짝 스와이프한 손가락도
   // 드래그로 잡혀버리는데, 지연 기준은 그 시간 동안 손가락이 tolerance 이상 움직이면 드래그를
@@ -102,6 +105,27 @@ export function SectionsBoardView({
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+
+  useEffect(() => () => {
+    if (scrollFrameRef.current !== null) cancelAnimationFrame(scrollFrameRef.current);
+  }, []);
+
+  function onCanvasScroll(event: UIEvent<HTMLDivElement>) {
+    if (!onActiveSectionChange || query || scrollFrameRef.current !== null) return;
+    const scroller = event.currentTarget;
+    scrollFrameRef.current = requestAnimationFrame(() => {
+      scrollFrameRef.current = null;
+      const left = scroller.getBoundingClientRect().left;
+      let closest: { id: string; distance: number } | null = null;
+      for (const section of filteredSections) {
+        const element = document.getElementById(`section-${section.id}`);
+        if (!element) continue;
+        const distance = Math.abs(element.getBoundingClientRect().left - left);
+        if (!closest || distance < closest.distance) closest = { id: section.id, distance };
+      }
+      if (closest) onActiveSectionChange(closest.id);
+    });
+  }
 
   function onDragStart(event: DragStartEvent) {
     const { active } = event;
@@ -189,7 +213,7 @@ export function SectionsBoardView({
   return (
     <DndContext id={`board-dnd-${boardId}`} sensors={sensors} collisionDetection={collisionDetectionStrategy} onDragStart={onDragStart} onDragOver={onDragOver} onDragEnd={onDragEnd} onDragCancel={onDragCancel}>
       <SortableContext items={filteredSections.map((section) => `section:${section.id}`)} strategy={horizontalListSortingStrategy}>
-        <div className="pad-canvas">
+        <div className="pad-canvas" onScroll={onCanvasScroll}>
           {filteredSections.map((section, index) => (
             <SectionColumn
               key={section.id}
@@ -206,7 +230,14 @@ export function SectionsBoardView({
               onLoadMore={query ? undefined : onLoadMore}
             />
           ))}
-          {canManage && !query && <button className="add-section-card" onClick={onAddSection}><span><Plus /></span><b>새 섹션</b><small>생각을 나눌 주제를 추가해요</small></button>}
+          {!filteredSections.length && (query || !canManage) && (
+            <div className="pad-canvas-empty">
+              <span><Plus size={18} /></span>
+              <b>{query ? "검색 결과가 없어요" : "아직 섹션이 없어요"}</b>
+              <small>{query ? "다른 검색어를 입력해 보세요." : "관리자가 섹션을 만들면 여기에 표시됩니다."}</small>
+            </div>
+          )}
+          {canManage && !query && <button type="button" className="add-section-card" onClick={onAddSection}><span><Plus /></span><b>새 섹션</b><small>생각을 나눌 주제를 추가해요</small></button>}
         </div>
       </SortableContext>
       <DragOverlay>

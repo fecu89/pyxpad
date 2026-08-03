@@ -84,9 +84,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ atta
       "Content-Disposition": contentDisposition(attachment.originalName, download || !isInlineSafe(contentType)),
       "Accept-Ranges": "bytes",
       "X-Content-Type-Options": "nosniff",
-      "Cache-Control": "private, max-age=3600",
+      // max-age를 길게 주면 보드 멤버에서 제외되거나 첨부 다운로드 정책이 꺼진 뒤에도 그 시간
+      // 동안 브라우저 캐시로 파일을 계속 볼 수 있습니다. no-cache는 캐시 자체는 허용하되 매번
+      // 서버에 재검증을 요구하므로, 권한 변경이 즉시 반영되면서 304로 재전송 비용도 아낍니다.
+      "Cache-Control": "private, no-cache, must-revalidate",
+      // 파일은 UUID 저장명으로 한 번 쓰고 바뀌지 않으므로, 재검증은 변경 여부가 아니라 권한을
+      // 다시 확인하기 위한 것입니다. ETag로 본문 재전송만 피합니다.
+      ETag: `"${attachmentId}-${fileStat.size}-${fileStat.mtimeMs}"`,
     };
     const rangeHeader = request.headers.get("range");
+    // 여기까지 왔다면 권한 검사는 모두 통과한 상태이므로, 내용이 그대로면 본문 없이 304만
+    // 돌려줍니다. Range 요청은 부분 응답 규칙이 달라 그대로 처리합니다.
+    if (!rangeHeader && request.headers.get("if-none-match") === baseHeaders.ETag) {
+      return new Response(null, { status: 304, headers: baseHeaders });
+    }
     if (rangeHeader) {
       const range = parseRange(rangeHeader, fileStat.size);
       if (!range) return new Response(null, { status: 416, headers: { ...baseHeaders, "Content-Range": `bytes */${fileStat.size}` } });

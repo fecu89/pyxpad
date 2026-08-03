@@ -28,23 +28,29 @@ export type AggregateUser = {
 
 export type UserAvgAggregateOutputType = {
   authVersion: number | null
+  studentNumber: number | null
 }
 
 export type UserSumAggregateOutputType = {
   authVersion: number | null
+  studentNumber: number | null
 }
 
 export type UserMinAggregateOutputType = {
   id: string | null
-  emailEncrypted: string | null
-  emailLookup: string | null
+  loginIdentifierEncrypted: string | null
+  loginIdentifierLookup: string | null
+  passwordHash: string | null
+  mustChangePassword: boolean | null
   nameEncrypted: string | null
+  nameLookup: string | null
   imageEncrypted: string | null
   role: $Enums.UserRole | null
   status: $Enums.UserStatus | null
   authVersion: number | null
   schoolId: string | null
   schoolGroupId: string | null
+  studentNumber: number | null
   isSchoolRepresentative: boolean | null
   onboardingCompletedAt: Date | null
   lastLoginAt: Date | null
@@ -54,15 +60,19 @@ export type UserMinAggregateOutputType = {
 
 export type UserMaxAggregateOutputType = {
   id: string | null
-  emailEncrypted: string | null
-  emailLookup: string | null
+  loginIdentifierEncrypted: string | null
+  loginIdentifierLookup: string | null
+  passwordHash: string | null
+  mustChangePassword: boolean | null
   nameEncrypted: string | null
+  nameLookup: string | null
   imageEncrypted: string | null
   role: $Enums.UserRole | null
   status: $Enums.UserStatus | null
   authVersion: number | null
   schoolId: string | null
   schoolGroupId: string | null
+  studentNumber: number | null
   isSchoolRepresentative: boolean | null
   onboardingCompletedAt: Date | null
   lastLoginAt: Date | null
@@ -72,15 +82,19 @@ export type UserMaxAggregateOutputType = {
 
 export type UserCountAggregateOutputType = {
   id: number
-  emailEncrypted: number
-  emailLookup: number
+  loginIdentifierEncrypted: number
+  loginIdentifierLookup: number
+  passwordHash: number
+  mustChangePassword: number
   nameEncrypted: number
+  nameLookup: number
   imageEncrypted: number
   role: number
   status: number
   authVersion: number
   schoolId: number
   schoolGroupId: number
+  studentNumber: number
   isSchoolRepresentative: number
   onboardingCompletedAt: number
   lastLoginAt: number
@@ -92,23 +106,29 @@ export type UserCountAggregateOutputType = {
 
 export type UserAvgAggregateInputType = {
   authVersion?: true
+  studentNumber?: true
 }
 
 export type UserSumAggregateInputType = {
   authVersion?: true
+  studentNumber?: true
 }
 
 export type UserMinAggregateInputType = {
   id?: true
-  emailEncrypted?: true
-  emailLookup?: true
+  loginIdentifierEncrypted?: true
+  loginIdentifierLookup?: true
+  passwordHash?: true
+  mustChangePassword?: true
   nameEncrypted?: true
+  nameLookup?: true
   imageEncrypted?: true
   role?: true
   status?: true
   authVersion?: true
   schoolId?: true
   schoolGroupId?: true
+  studentNumber?: true
   isSchoolRepresentative?: true
   onboardingCompletedAt?: true
   lastLoginAt?: true
@@ -118,15 +138,19 @@ export type UserMinAggregateInputType = {
 
 export type UserMaxAggregateInputType = {
   id?: true
-  emailEncrypted?: true
-  emailLookup?: true
+  loginIdentifierEncrypted?: true
+  loginIdentifierLookup?: true
+  passwordHash?: true
+  mustChangePassword?: true
   nameEncrypted?: true
+  nameLookup?: true
   imageEncrypted?: true
   role?: true
   status?: true
   authVersion?: true
   schoolId?: true
   schoolGroupId?: true
+  studentNumber?: true
   isSchoolRepresentative?: true
   onboardingCompletedAt?: true
   lastLoginAt?: true
@@ -136,15 +160,19 @@ export type UserMaxAggregateInputType = {
 
 export type UserCountAggregateInputType = {
   id?: true
-  emailEncrypted?: true
-  emailLookup?: true
+  loginIdentifierEncrypted?: true
+  loginIdentifierLookup?: true
+  passwordHash?: true
+  mustChangePassword?: true
   nameEncrypted?: true
+  nameLookup?: true
   imageEncrypted?: true
   role?: true
   status?: true
   authVersion?: true
   schoolId?: true
   schoolGroupId?: true
+  studentNumber?: true
   isSchoolRepresentative?: true
   onboardingCompletedAt?: true
   lastLoginAt?: true
@@ -241,15 +269,19 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 
 export type UserGroupByOutputType = {
   id: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash: string | null
+  mustChangePassword: boolean
   nameEncrypted: string | null
+  nameLookup: string | null
   imageEncrypted: string | null
   role: $Enums.UserRole
   status: $Enums.UserStatus
   authVersion: number
   schoolId: string | null
   schoolGroupId: string | null
+  studentNumber: number | null
   isSchoolRepresentative: boolean
   onboardingCompletedAt: Date | null
   lastLoginAt: Date | null
@@ -282,15 +314,19 @@ export type UserWhereInput = {
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   id?: Prisma.StringFilter<"User"> | string
-  emailEncrypted?: Prisma.StringFilter<"User"> | string
-  emailLookup?: Prisma.StringFilter<"User"> | string
+  loginIdentifierEncrypted?: Prisma.StringFilter<"User"> | string
+  loginIdentifierLookup?: Prisma.StringFilter<"User"> | string
+  passwordHash?: Prisma.StringNullableFilter<"User"> | string | null
+  mustChangePassword?: Prisma.BoolFilter<"User"> | boolean
   nameEncrypted?: Prisma.StringNullableFilter<"User"> | string | null
+  nameLookup?: Prisma.StringNullableFilter<"User"> | string | null
   imageEncrypted?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
   authVersion?: Prisma.IntFilter<"User"> | number
   schoolId?: Prisma.StringNullableFilter<"User"> | string | null
   schoolGroupId?: Prisma.StringNullableFilter<"User"> | string | null
+  studentNumber?: Prisma.IntNullableFilter<"User"> | number | null
   isSchoolRepresentative?: Prisma.BoolFilter<"User"> | boolean
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -324,15 +360,19 @@ export type UserWhereInput = {
 
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  emailEncrypted?: Prisma.SortOrder
-  emailLookup?: Prisma.SortOrder
+  loginIdentifierEncrypted?: Prisma.SortOrder
+  loginIdentifierLookup?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  mustChangePassword?: Prisma.SortOrder
   nameEncrypted?: Prisma.SortOrderInput | Prisma.SortOrder
+  nameLookup?: Prisma.SortOrderInput | Prisma.SortOrder
   imageEncrypted?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   status?: Prisma.SortOrder
   authVersion?: Prisma.SortOrder
   schoolId?: Prisma.SortOrderInput | Prisma.SortOrder
   schoolGroupId?: Prisma.SortOrderInput | Prisma.SortOrder
+  studentNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   isSchoolRepresentative?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -366,11 +406,15 @@ export type UserOrderByWithRelationInput = {
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  emailLookup?: string
+  loginIdentifierLookup?: string
+  nameLookup?: string
+  schoolGroupId_studentNumber?: Prisma.UserSchoolGroupIdStudentNumberCompoundUniqueInput
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
-  emailEncrypted?: Prisma.StringFilter<"User"> | string
+  loginIdentifierEncrypted?: Prisma.StringFilter<"User"> | string
+  passwordHash?: Prisma.StringNullableFilter<"User"> | string | null
+  mustChangePassword?: Prisma.BoolFilter<"User"> | boolean
   nameEncrypted?: Prisma.StringNullableFilter<"User"> | string | null
   imageEncrypted?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
@@ -378,6 +422,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   authVersion?: Prisma.IntFilter<"User"> | number
   schoolId?: Prisma.StringNullableFilter<"User"> | string | null
   schoolGroupId?: Prisma.StringNullableFilter<"User"> | string | null
+  studentNumber?: Prisma.IntNullableFilter<"User"> | number | null
   isSchoolRepresentative?: Prisma.BoolFilter<"User"> | boolean
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -407,19 +452,23 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   reviewedTeacherRequests?: Prisma.TeacherApprovalRequestListRelationFilter
   school?: Prisma.XOR<Prisma.SchoolNullableScalarRelationFilter, Prisma.SchoolWhereInput> | null
   schoolGroup?: Prisma.XOR<Prisma.SchoolGroupNullableScalarRelationFilter, Prisma.SchoolGroupWhereInput> | null
-}, "id" | "emailLookup">
+}, "id" | "loginIdentifierLookup" | "nameLookup" | "schoolGroupId_studentNumber">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  emailEncrypted?: Prisma.SortOrder
-  emailLookup?: Prisma.SortOrder
+  loginIdentifierEncrypted?: Prisma.SortOrder
+  loginIdentifierLookup?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  mustChangePassword?: Prisma.SortOrder
   nameEncrypted?: Prisma.SortOrderInput | Prisma.SortOrder
+  nameLookup?: Prisma.SortOrderInput | Prisma.SortOrder
   imageEncrypted?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   status?: Prisma.SortOrder
   authVersion?: Prisma.SortOrder
   schoolId?: Prisma.SortOrderInput | Prisma.SortOrder
   schoolGroupId?: Prisma.SortOrderInput | Prisma.SortOrder
+  studentNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   isSchoolRepresentative?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -437,15 +486,19 @@ export type UserScalarWhereWithAggregatesInput = {
   OR?: Prisma.UserScalarWhereWithAggregatesInput[]
   NOT?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"User"> | string
-  emailEncrypted?: Prisma.StringWithAggregatesFilter<"User"> | string
-  emailLookup?: Prisma.StringWithAggregatesFilter<"User"> | string
+  loginIdentifierEncrypted?: Prisma.StringWithAggregatesFilter<"User"> | string
+  loginIdentifierLookup?: Prisma.StringWithAggregatesFilter<"User"> | string
+  passwordHash?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  mustChangePassword?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   nameEncrypted?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  nameLookup?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   imageEncrypted?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   role?: Prisma.EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
   status?: Prisma.EnumUserStatusWithAggregatesFilter<"User"> | $Enums.UserStatus
   authVersion?: Prisma.IntWithAggregatesFilter<"User"> | number
   schoolId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   schoolGroupId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  studentNumber?: Prisma.IntNullableWithAggregatesFilter<"User"> | number | null
   isSchoolRepresentative?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   onboardingCompletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   lastLoginAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
@@ -455,13 +508,17 @@ export type UserScalarWhereWithAggregatesInput = {
 
 export type UserCreateInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -495,15 +552,19 @@ export type UserCreateInput = {
 
 export type UserUncheckedCreateInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -535,13 +596,17 @@ export type UserUncheckedCreateInput = {
 
 export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -575,15 +640,19 @@ export type UserUpdateInput = {
 
 export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -615,15 +684,19 @@ export type UserUncheckedUpdateInput = {
 
 export type UserCreateManyInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -633,13 +706,17 @@ export type UserCreateManyInput = {
 
 export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -649,15 +726,19 @@ export type UserUpdateManyMutationInput = {
 
 export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -665,17 +746,26 @@ export type UserUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type UserSchoolGroupIdStudentNumberCompoundUniqueInput = {
+  schoolGroupId: string
+  studentNumber: number
+}
+
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  emailEncrypted?: Prisma.SortOrder
-  emailLookup?: Prisma.SortOrder
+  loginIdentifierEncrypted?: Prisma.SortOrder
+  loginIdentifierLookup?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrder
+  mustChangePassword?: Prisma.SortOrder
   nameEncrypted?: Prisma.SortOrder
+  nameLookup?: Prisma.SortOrder
   imageEncrypted?: Prisma.SortOrder
   role?: Prisma.SortOrder
   status?: Prisma.SortOrder
   authVersion?: Prisma.SortOrder
   schoolId?: Prisma.SortOrder
   schoolGroupId?: Prisma.SortOrder
+  studentNumber?: Prisma.SortOrder
   isSchoolRepresentative?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
@@ -685,19 +775,24 @@ export type UserCountOrderByAggregateInput = {
 
 export type UserAvgOrderByAggregateInput = {
   authVersion?: Prisma.SortOrder
+  studentNumber?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  emailEncrypted?: Prisma.SortOrder
-  emailLookup?: Prisma.SortOrder
+  loginIdentifierEncrypted?: Prisma.SortOrder
+  loginIdentifierLookup?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrder
+  mustChangePassword?: Prisma.SortOrder
   nameEncrypted?: Prisma.SortOrder
+  nameLookup?: Prisma.SortOrder
   imageEncrypted?: Prisma.SortOrder
   role?: Prisma.SortOrder
   status?: Prisma.SortOrder
   authVersion?: Prisma.SortOrder
   schoolId?: Prisma.SortOrder
   schoolGroupId?: Prisma.SortOrder
+  studentNumber?: Prisma.SortOrder
   isSchoolRepresentative?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
@@ -707,15 +802,19 @@ export type UserMaxOrderByAggregateInput = {
 
 export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  emailEncrypted?: Prisma.SortOrder
-  emailLookup?: Prisma.SortOrder
+  loginIdentifierEncrypted?: Prisma.SortOrder
+  loginIdentifierLookup?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrder
+  mustChangePassword?: Prisma.SortOrder
   nameEncrypted?: Prisma.SortOrder
+  nameLookup?: Prisma.SortOrder
   imageEncrypted?: Prisma.SortOrder
   role?: Prisma.SortOrder
   status?: Prisma.SortOrder
   authVersion?: Prisma.SortOrder
   schoolId?: Prisma.SortOrder
   schoolGroupId?: Prisma.SortOrder
+  studentNumber?: Prisma.SortOrder
   isSchoolRepresentative?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
@@ -725,6 +824,7 @@ export type UserMinOrderByAggregateInput = {
 
 export type UserSumOrderByAggregateInput = {
   authVersion?: Prisma.SortOrder
+  studentNumber?: Prisma.SortOrder
 }
 
 export type UserListRelationFilter = {
@@ -755,6 +855,10 @@ export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
 }
 
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
 export type EnumUserRoleFieldUpdateOperationsInput = {
   set?: $Enums.UserRole
 }
@@ -771,8 +875,12 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -1185,13 +1293,17 @@ export type UserUpdateOneRequiredWithoutReactionsNestedInput = {
 
 export type UserCreateWithoutSchoolInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -1224,14 +1336,18 @@ export type UserCreateWithoutSchoolInput = {
 
 export type UserUncheckedCreateWithoutSchoolInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -1292,15 +1408,19 @@ export type UserScalarWhereInput = {
   OR?: Prisma.UserScalarWhereInput[]
   NOT?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
   id?: Prisma.StringFilter<"User"> | string
-  emailEncrypted?: Prisma.StringFilter<"User"> | string
-  emailLookup?: Prisma.StringFilter<"User"> | string
+  loginIdentifierEncrypted?: Prisma.StringFilter<"User"> | string
+  loginIdentifierLookup?: Prisma.StringFilter<"User"> | string
+  passwordHash?: Prisma.StringNullableFilter<"User"> | string | null
+  mustChangePassword?: Prisma.BoolFilter<"User"> | boolean
   nameEncrypted?: Prisma.StringNullableFilter<"User"> | string | null
+  nameLookup?: Prisma.StringNullableFilter<"User"> | string | null
   imageEncrypted?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
   authVersion?: Prisma.IntFilter<"User"> | number
   schoolId?: Prisma.StringNullableFilter<"User"> | string | null
   schoolGroupId?: Prisma.StringNullableFilter<"User"> | string | null
+  studentNumber?: Prisma.IntNullableFilter<"User"> | number | null
   isSchoolRepresentative?: Prisma.BoolFilter<"User"> | boolean
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -1310,13 +1430,17 @@ export type UserScalarWhereInput = {
 
 export type UserCreateWithoutSchoolGroupInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -1349,14 +1473,18 @@ export type UserCreateWithoutSchoolGroupInput = {
 
 export type UserUncheckedCreateWithoutSchoolGroupInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -1414,13 +1542,17 @@ export type UserUpdateManyWithWhereWithoutSchoolGroupInput = {
 
 export type UserCreateWithoutTeacherApprovalRequestInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -1453,15 +1585,19 @@ export type UserCreateWithoutTeacherApprovalRequestInput = {
 
 export type UserUncheckedCreateWithoutTeacherApprovalRequestInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -1497,13 +1633,17 @@ export type UserCreateOrConnectWithoutTeacherApprovalRequestInput = {
 
 export type UserCreateWithoutReviewedTeacherRequestsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -1536,15 +1676,19 @@ export type UserCreateWithoutReviewedTeacherRequestsInput = {
 
 export type UserUncheckedCreateWithoutReviewedTeacherRequestsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -1591,13 +1735,17 @@ export type UserUpdateToOneWithWhereWithoutTeacherApprovalRequestInput = {
 
 export type UserUpdateWithoutTeacherApprovalRequestInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1630,15 +1778,19 @@ export type UserUpdateWithoutTeacherApprovalRequestInput = {
 
 export type UserUncheckedUpdateWithoutTeacherApprovalRequestInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1680,13 +1832,17 @@ export type UserUpdateToOneWithWhereWithoutReviewedTeacherRequestsInput = {
 
 export type UserUpdateWithoutReviewedTeacherRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1719,15 +1875,19 @@ export type UserUpdateWithoutReviewedTeacherRequestsInput = {
 
 export type UserUncheckedUpdateWithoutReviewedTeacherRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1758,13 +1918,17 @@ export type UserUncheckedUpdateWithoutReviewedTeacherRequestsInput = {
 
 export type UserCreateWithoutBoardActivitiesInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -1797,15 +1961,19 @@ export type UserCreateWithoutBoardActivitiesInput = {
 
 export type UserUncheckedCreateWithoutBoardActivitiesInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -1852,13 +2020,17 @@ export type UserUpdateToOneWithWhereWithoutBoardActivitiesInput = {
 
 export type UserUpdateWithoutBoardActivitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1891,15 +2063,19 @@ export type UserUpdateWithoutBoardActivitiesInput = {
 
 export type UserUncheckedUpdateWithoutBoardActivitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1930,13 +2106,17 @@ export type UserUncheckedUpdateWithoutBoardActivitiesInput = {
 
 export type UserCreateWithoutBoardFollowsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -1969,15 +2149,19 @@ export type UserCreateWithoutBoardFollowsInput = {
 
 export type UserUncheckedCreateWithoutBoardFollowsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -2024,13 +2208,17 @@ export type UserUpdateToOneWithWhereWithoutBoardFollowsInput = {
 
 export type UserUpdateWithoutBoardFollowsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2063,15 +2251,19 @@ export type UserUpdateWithoutBoardFollowsInput = {
 
 export type UserUncheckedUpdateWithoutBoardFollowsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2102,13 +2294,17 @@ export type UserUncheckedUpdateWithoutBoardFollowsInput = {
 
 export type UserCreateWithoutBoardVisitsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -2141,15 +2337,19 @@ export type UserCreateWithoutBoardVisitsInput = {
 
 export type UserUncheckedCreateWithoutBoardVisitsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -2196,13 +2396,17 @@ export type UserUpdateToOneWithWhereWithoutBoardVisitsInput = {
 
 export type UserUpdateWithoutBoardVisitsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2235,15 +2439,19 @@ export type UserUpdateWithoutBoardVisitsInput = {
 
 export type UserUncheckedUpdateWithoutBoardVisitsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2274,13 +2482,17 @@ export type UserUncheckedUpdateWithoutBoardVisitsInput = {
 
 export type UserCreateWithoutBoardFavoritesInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -2313,15 +2525,19 @@ export type UserCreateWithoutBoardFavoritesInput = {
 
 export type UserUncheckedCreateWithoutBoardFavoritesInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -2368,13 +2584,17 @@ export type UserUpdateToOneWithWhereWithoutBoardFavoritesInput = {
 
 export type UserUpdateWithoutBoardFavoritesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2407,15 +2627,19 @@ export type UserUpdateWithoutBoardFavoritesInput = {
 
 export type UserUncheckedUpdateWithoutBoardFavoritesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2446,13 +2670,17 @@ export type UserUncheckedUpdateWithoutBoardFavoritesInput = {
 
 export type UserCreateWithoutDashboardFoldersInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -2485,15 +2713,19 @@ export type UserCreateWithoutDashboardFoldersInput = {
 
 export type UserUncheckedCreateWithoutDashboardFoldersInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -2540,13 +2772,17 @@ export type UserUpdateToOneWithWhereWithoutDashboardFoldersInput = {
 
 export type UserUpdateWithoutDashboardFoldersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2579,15 +2815,19 @@ export type UserUpdateWithoutDashboardFoldersInput = {
 
 export type UserUncheckedUpdateWithoutDashboardFoldersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2618,13 +2858,17 @@ export type UserUncheckedUpdateWithoutDashboardFoldersInput = {
 
 export type UserCreateWithoutNotificationsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -2657,15 +2901,19 @@ export type UserCreateWithoutNotificationsInput = {
 
 export type UserUncheckedCreateWithoutNotificationsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -2701,13 +2949,17 @@ export type UserCreateOrConnectWithoutNotificationsInput = {
 
 export type UserCreateWithoutTriggeredNotificationsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -2740,15 +2992,19 @@ export type UserCreateWithoutTriggeredNotificationsInput = {
 
 export type UserUncheckedCreateWithoutTriggeredNotificationsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -2795,13 +3051,17 @@ export type UserUpdateToOneWithWhereWithoutNotificationsInput = {
 
 export type UserUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2834,15 +3094,19 @@ export type UserUpdateWithoutNotificationsInput = {
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2884,13 +3148,17 @@ export type UserUpdateToOneWithWhereWithoutTriggeredNotificationsInput = {
 
 export type UserUpdateWithoutTriggeredNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2923,15 +3191,19 @@ export type UserUpdateWithoutTriggeredNotificationsInput = {
 
 export type UserUncheckedUpdateWithoutTriggeredNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2962,13 +3234,17 @@ export type UserUncheckedUpdateWithoutTriggeredNotificationsInput = {
 
 export type UserCreateWithoutSystemPermissionsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -3001,15 +3277,19 @@ export type UserCreateWithoutSystemPermissionsInput = {
 
 export type UserUncheckedCreateWithoutSystemPermissionsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -3045,13 +3325,17 @@ export type UserCreateOrConnectWithoutSystemPermissionsInput = {
 
 export type UserCreateWithoutGrantedPermissionsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -3084,15 +3368,19 @@ export type UserCreateWithoutGrantedPermissionsInput = {
 
 export type UserUncheckedCreateWithoutGrantedPermissionsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -3139,13 +3427,17 @@ export type UserUpdateToOneWithWhereWithoutSystemPermissionsInput = {
 
 export type UserUpdateWithoutSystemPermissionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3178,15 +3470,19 @@ export type UserUpdateWithoutSystemPermissionsInput = {
 
 export type UserUncheckedUpdateWithoutSystemPermissionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3228,13 +3524,17 @@ export type UserUpdateToOneWithWhereWithoutGrantedPermissionsInput = {
 
 export type UserUpdateWithoutGrantedPermissionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3267,15 +3567,19 @@ export type UserUpdateWithoutGrantedPermissionsInput = {
 
 export type UserUncheckedUpdateWithoutGrantedPermissionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3306,13 +3610,17 @@ export type UserUncheckedUpdateWithoutGrantedPermissionsInput = {
 
 export type UserCreateWithoutAuditActionsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -3345,15 +3653,19 @@ export type UserCreateWithoutAuditActionsInput = {
 
 export type UserUncheckedCreateWithoutAuditActionsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -3389,13 +3701,17 @@ export type UserCreateOrConnectWithoutAuditActionsInput = {
 
 export type UserCreateWithoutTargetedAuditActionsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -3428,15 +3744,19 @@ export type UserCreateWithoutTargetedAuditActionsInput = {
 
 export type UserUncheckedCreateWithoutTargetedAuditActionsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -3483,13 +3803,17 @@ export type UserUpdateToOneWithWhereWithoutAuditActionsInput = {
 
 export type UserUpdateWithoutAuditActionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3522,15 +3846,19 @@ export type UserUpdateWithoutAuditActionsInput = {
 
 export type UserUncheckedUpdateWithoutAuditActionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3572,13 +3900,17 @@ export type UserUpdateToOneWithWhereWithoutTargetedAuditActionsInput = {
 
 export type UserUpdateWithoutTargetedAuditActionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3611,15 +3943,19 @@ export type UserUpdateWithoutTargetedAuditActionsInput = {
 
 export type UserUncheckedUpdateWithoutTargetedAuditActionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3650,13 +3986,17 @@ export type UserUncheckedUpdateWithoutTargetedAuditActionsInput = {
 
 export type UserCreateWithoutOwnedBoardsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -3689,15 +4029,19 @@ export type UserCreateWithoutOwnedBoardsInput = {
 
 export type UserUncheckedCreateWithoutOwnedBoardsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -3744,13 +4088,17 @@ export type UserUpdateToOneWithWhereWithoutOwnedBoardsInput = {
 
 export type UserUpdateWithoutOwnedBoardsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3783,15 +4131,19 @@ export type UserUpdateWithoutOwnedBoardsInput = {
 
 export type UserUncheckedUpdateWithoutOwnedBoardsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3822,13 +4174,17 @@ export type UserUncheckedUpdateWithoutOwnedBoardsInput = {
 
 export type UserCreateWithoutCreatedInviteLinksInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -3861,15 +4217,19 @@ export type UserCreateWithoutCreatedInviteLinksInput = {
 
 export type UserUncheckedCreateWithoutCreatedInviteLinksInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -3916,13 +4276,17 @@ export type UserUpdateToOneWithWhereWithoutCreatedInviteLinksInput = {
 
 export type UserUpdateWithoutCreatedInviteLinksInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3955,15 +4319,19 @@ export type UserUpdateWithoutCreatedInviteLinksInput = {
 
 export type UserUncheckedUpdateWithoutCreatedInviteLinksInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3994,13 +4362,17 @@ export type UserUncheckedUpdateWithoutCreatedInviteLinksInput = {
 
 export type UserCreateWithoutMembershipsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -4033,15 +4405,19 @@ export type UserCreateWithoutMembershipsInput = {
 
 export type UserUncheckedCreateWithoutMembershipsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -4088,13 +4464,17 @@ export type UserUpdateToOneWithWhereWithoutMembershipsInput = {
 
 export type UserUpdateWithoutMembershipsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4127,15 +4507,19 @@ export type UserUpdateWithoutMembershipsInput = {
 
 export type UserUncheckedUpdateWithoutMembershipsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4166,13 +4550,17 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
 
 export type UserCreateWithoutAccessRequestsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -4205,15 +4593,19 @@ export type UserCreateWithoutAccessRequestsInput = {
 
 export type UserUncheckedCreateWithoutAccessRequestsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -4260,13 +4652,17 @@ export type UserUpdateToOneWithWhereWithoutAccessRequestsInput = {
 
 export type UserUpdateWithoutAccessRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4299,15 +4695,19 @@ export type UserUpdateWithoutAccessRequestsInput = {
 
 export type UserUncheckedUpdateWithoutAccessRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4338,13 +4738,17 @@ export type UserUncheckedUpdateWithoutAccessRequestsInput = {
 
 export type UserCreateWithoutPostsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -4377,15 +4781,19 @@ export type UserCreateWithoutPostsInput = {
 
 export type UserUncheckedCreateWithoutPostsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -4432,13 +4840,17 @@ export type UserUpdateToOneWithWhereWithoutPostsInput = {
 
 export type UserUpdateWithoutPostsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4471,15 +4883,19 @@ export type UserUpdateWithoutPostsInput = {
 
 export type UserUncheckedUpdateWithoutPostsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4510,13 +4926,17 @@ export type UserUncheckedUpdateWithoutPostsInput = {
 
 export type UserCreateWithoutAttachmentsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -4549,15 +4969,19 @@ export type UserCreateWithoutAttachmentsInput = {
 
 export type UserUncheckedCreateWithoutAttachmentsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -4604,13 +5028,17 @@ export type UserUpdateToOneWithWhereWithoutAttachmentsInput = {
 
 export type UserUpdateWithoutAttachmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4643,15 +5071,19 @@ export type UserUpdateWithoutAttachmentsInput = {
 
 export type UserUncheckedUpdateWithoutAttachmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4682,13 +5114,17 @@ export type UserUncheckedUpdateWithoutAttachmentsInput = {
 
 export type UserCreateWithoutCommentsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -4721,15 +5157,19 @@ export type UserCreateWithoutCommentsInput = {
 
 export type UserUncheckedCreateWithoutCommentsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -4776,13 +5216,17 @@ export type UserUpdateToOneWithWhereWithoutCommentsInput = {
 
 export type UserUpdateWithoutCommentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4815,15 +5259,19 @@ export type UserUpdateWithoutCommentsInput = {
 
 export type UserUncheckedUpdateWithoutCommentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4854,13 +5302,17 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
 
 export type UserCreateWithoutCommentMentionsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -4893,15 +5345,19 @@ export type UserCreateWithoutCommentMentionsInput = {
 
 export type UserUncheckedCreateWithoutCommentMentionsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -4948,13 +5404,17 @@ export type UserUpdateToOneWithWhereWithoutCommentMentionsInput = {
 
 export type UserUpdateWithoutCommentMentionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4987,15 +5447,19 @@ export type UserUpdateWithoutCommentMentionsInput = {
 
 export type UserUncheckedUpdateWithoutCommentMentionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5026,13 +5490,17 @@ export type UserUncheckedUpdateWithoutCommentMentionsInput = {
 
 export type UserCreateWithoutReactionsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -5065,15 +5533,19 @@ export type UserCreateWithoutReactionsInput = {
 
 export type UserUncheckedCreateWithoutReactionsInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -5120,13 +5592,17 @@ export type UserUpdateToOneWithWhereWithoutReactionsInput = {
 
 export type UserUpdateWithoutReactionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5159,15 +5635,19 @@ export type UserUpdateWithoutReactionsInput = {
 
 export type UserUncheckedUpdateWithoutReactionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5198,14 +5678,18 @@ export type UserUncheckedUpdateWithoutReactionsInput = {
 
 export type UserCreateManySchoolInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolGroupId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -5215,13 +5699,17 @@ export type UserCreateManySchoolInput = {
 
 export type UserUpdateWithoutSchoolInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5254,14 +5742,18 @@ export type UserUpdateWithoutSchoolInput = {
 
 export type UserUncheckedUpdateWithoutSchoolInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5293,14 +5785,18 @@ export type UserUncheckedUpdateWithoutSchoolInput = {
 
 export type UserUncheckedUpdateManyWithoutSchoolInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5310,14 +5806,18 @@ export type UserUncheckedUpdateManyWithoutSchoolInput = {
 
 export type UserCreateManySchoolGroupInput = {
   id?: string
-  emailEncrypted: string
-  emailLookup: string
+  loginIdentifierEncrypted: string
+  loginIdentifierLookup: string
+  passwordHash?: string | null
+  mustChangePassword?: boolean
   nameEncrypted?: string | null
+  nameLookup?: string | null
   imageEncrypted?: string | null
   role?: $Enums.UserRole
   status?: $Enums.UserStatus
   authVersion?: number
   schoolId?: string | null
+  studentNumber?: number | null
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: Date | string | null
   lastLoginAt?: Date | string | null
@@ -5327,13 +5827,17 @@ export type UserCreateManySchoolGroupInput = {
 
 export type UserUpdateWithoutSchoolGroupInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5366,14 +5870,18 @@ export type UserUpdateWithoutSchoolGroupInput = {
 
 export type UserUncheckedUpdateWithoutSchoolGroupInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5405,14 +5913,18 @@ export type UserUncheckedUpdateWithoutSchoolGroupInput = {
 
 export type UserUncheckedUpdateManyWithoutSchoolGroupInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  emailEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
-  emailLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
+  loginIdentifierLookup?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   nameEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nameLookup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   schoolId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isSchoolRepresentative?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5633,15 +6145,19 @@ export type UserCountOutputTypeCountReviewedTeacherRequestsArgs<ExtArgs extends 
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  emailEncrypted?: boolean
-  emailLookup?: boolean
+  loginIdentifierEncrypted?: boolean
+  loginIdentifierLookup?: boolean
+  passwordHash?: boolean
+  mustChangePassword?: boolean
   nameEncrypted?: boolean
+  nameLookup?: boolean
   imageEncrypted?: boolean
   role?: boolean
   status?: boolean
   authVersion?: boolean
   schoolId?: boolean
   schoolGroupId?: boolean
+  studentNumber?: boolean
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: boolean
   lastLoginAt?: boolean
@@ -5676,15 +6192,19 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 
 export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  emailEncrypted?: boolean
-  emailLookup?: boolean
+  loginIdentifierEncrypted?: boolean
+  loginIdentifierLookup?: boolean
+  passwordHash?: boolean
+  mustChangePassword?: boolean
   nameEncrypted?: boolean
+  nameLookup?: boolean
   imageEncrypted?: boolean
   role?: boolean
   status?: boolean
   authVersion?: boolean
   schoolId?: boolean
   schoolGroupId?: boolean
+  studentNumber?: boolean
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: boolean
   lastLoginAt?: boolean
@@ -5696,15 +6216,19 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  emailEncrypted?: boolean
-  emailLookup?: boolean
+  loginIdentifierEncrypted?: boolean
+  loginIdentifierLookup?: boolean
+  passwordHash?: boolean
+  mustChangePassword?: boolean
   nameEncrypted?: boolean
+  nameLookup?: boolean
   imageEncrypted?: boolean
   role?: boolean
   status?: boolean
   authVersion?: boolean
   schoolId?: boolean
   schoolGroupId?: boolean
+  studentNumber?: boolean
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: boolean
   lastLoginAt?: boolean
@@ -5716,15 +6240,19 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 
 export type UserSelectScalar = {
   id?: boolean
-  emailEncrypted?: boolean
-  emailLookup?: boolean
+  loginIdentifierEncrypted?: boolean
+  loginIdentifierLookup?: boolean
+  passwordHash?: boolean
+  mustChangePassword?: boolean
   nameEncrypted?: boolean
+  nameLookup?: boolean
   imageEncrypted?: boolean
   role?: boolean
   status?: boolean
   authVersion?: boolean
   schoolId?: boolean
   schoolGroupId?: boolean
+  studentNumber?: boolean
   isSchoolRepresentative?: boolean
   onboardingCompletedAt?: boolean
   lastLoginAt?: boolean
@@ -5732,7 +6260,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "emailEncrypted" | "emailLookup" | "nameEncrypted" | "imageEncrypted" | "role" | "status" | "authVersion" | "schoolId" | "schoolGroupId" | "isSchoolRepresentative" | "onboardingCompletedAt" | "lastLoginAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "loginIdentifierEncrypted" | "loginIdentifierLookup" | "passwordHash" | "mustChangePassword" | "nameEncrypted" | "nameLookup" | "imageEncrypted" | "role" | "status" | "authVersion" | "schoolId" | "schoolGroupId" | "studentNumber" | "isSchoolRepresentative" | "onboardingCompletedAt" | "lastLoginAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   ownedBoards?: boolean | Prisma.User$ownedBoardsArgs<ExtArgs>
   memberships?: boolean | Prisma.User$membershipsArgs<ExtArgs>
@@ -5799,15 +6327,19 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    emailEncrypted: string
-    emailLookup: string
+    loginIdentifierEncrypted: string
+    loginIdentifierLookup: string
+    passwordHash: string | null
+    mustChangePassword: boolean
     nameEncrypted: string | null
+    nameLookup: string | null
     imageEncrypted: string | null
     role: $Enums.UserRole
     status: $Enums.UserStatus
     authVersion: number
     schoolId: string | null
     schoolGroupId: string | null
+    studentNumber: number | null
     isSchoolRepresentative: boolean
     onboardingCompletedAt: Date | null
     lastLoginAt: Date | null
@@ -6261,15 +6793,19 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
  */
 export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'String'>
-  readonly emailEncrypted: Prisma.FieldRef<"User", 'String'>
-  readonly emailLookup: Prisma.FieldRef<"User", 'String'>
+  readonly loginIdentifierEncrypted: Prisma.FieldRef<"User", 'String'>
+  readonly loginIdentifierLookup: Prisma.FieldRef<"User", 'String'>
+  readonly passwordHash: Prisma.FieldRef<"User", 'String'>
+  readonly mustChangePassword: Prisma.FieldRef<"User", 'Boolean'>
   readonly nameEncrypted: Prisma.FieldRef<"User", 'String'>
+  readonly nameLookup: Prisma.FieldRef<"User", 'String'>
   readonly imageEncrypted: Prisma.FieldRef<"User", 'String'>
   readonly role: Prisma.FieldRef<"User", 'UserRole'>
   readonly status: Prisma.FieldRef<"User", 'UserStatus'>
   readonly authVersion: Prisma.FieldRef<"User", 'Int'>
   readonly schoolId: Prisma.FieldRef<"User", 'String'>
   readonly schoolGroupId: Prisma.FieldRef<"User", 'String'>
+  readonly studentNumber: Prisma.FieldRef<"User", 'Int'>
   readonly isSchoolRepresentative: Prisma.FieldRef<"User", 'Boolean'>
   readonly onboardingCompletedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly lastLoginAt: Prisma.FieldRef<"User", 'DateTime'>

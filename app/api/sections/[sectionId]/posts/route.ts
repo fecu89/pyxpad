@@ -8,6 +8,7 @@ import { apiError, assertSameOrigin } from "@/lib/http";
 import { createNotification } from "@/lib/notifications/create";
 import { getPrisma } from "@/lib/prisma";
 import { publishBoardEvent } from "@/lib/realtime/board-events";
+import { assertRateLimit } from "@/lib/security/rate-limit";
 import { toPublicAuthorDTO } from "@/lib/users/repository";
 import { defaultPostFieldConfig } from "@/lib/post-fields/defaults";
 import { parsePostFieldConfig, validatePostFieldSubmission, validateSystemPostFields, PostFieldValidationError } from "@/lib/post-fields/validation";
@@ -112,6 +113,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ sec
   try {
     assertSameOrigin(request);
     const user = await requireActiveUser();
+    // 글 한 건마다 활동 로그·알림·SSE 발행이 따라붙습니다. 수업 중 연속 작성은 통과하고
+    // 스크립트 도배만 걸리는 선입니다.
+    assertRateLimit(request, {
+      scope: "post-create",
+      userId: user.id,
+      windowMs: 60_000,
+      maxAttempts: 30,
+      message: "글을 너무 빠르게 작성했습니다. 잠시 후 다시 시도해 주세요.",
+    });
     const { sectionId } = await params;
     const parsed = createPostSchema.safeParse(await request.json());
     if (!parsed.success) return Response.json({ error: "입력값이 올바르지 않습니다." }, { status: 400 });

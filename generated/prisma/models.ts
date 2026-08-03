@@ -9,7 +9,10 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/User'
+export type * from './models/AuthRateLimit'
+export type * from './models/AuthSecurityEvent'
 export type * from './models/School'
+export type * from './models/SchoolGrade'
 export type * from './models/SchoolGroup'
 export type * from './models/TeacherApprovalRequest'
 export type * from './models/BoardActivity'

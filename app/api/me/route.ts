@@ -1,15 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { unlink } from "node:fs/promises";
-import { z } from "zod";
 import { requireActiveUser } from "@/lib/auth/authorization";
 import { getAvatarPath } from "@/lib/files/paths";
 import { apiError, assertSameOrigin } from "@/lib/http";
 import { getPrisma } from "@/lib/prisma";
 import { encryptUserPii } from "@/lib/security/pii-crypto";
+import { isNicknameAvailable, isNicknameUniqueConflict, nicknameSchema } from "@/lib/users/nickname";
+import { z } from "zod";
 
-const updateProfileSchema = z.object({
-  name: z.string().trim().min(1, "닉네임을 입력해 주세요.").max(60, "닉네임은 60자 이하로 입력해 주세요."),
-});
+const updateProfileSchema = z.object({ name: nicknameSchema });
 
 export async function PATCH(request: Request) {
   try {
@@ -17,12 +16,20 @@ export async function PATCH(request: Request) {
     const user = await requireActiveUser();
     const parsed = updateProfileSchema.safeParse(await request.json());
     if (!parsed.success) return Response.json({ error: parsed.error.issues[0]?.message ?? "닉네임을 확인해 주세요." }, { status: 400 });
+    const nickname = await isNicknameAvailable(parsed.data.name, user.id);
+    if (!nickname.available) return Response.json({ error: "이미 사용 중인 닉네임입니다." }, { status: 409 });
     await getPrisma().user.update({
       where: { id: user.id },
-      data: { nameEncrypted: encryptUserPii(user.id, "name", parsed.data.name) },
+      data: {
+        nameEncrypted: encryptUserPii(user.id, "name", parsed.data.name),
+        nameLookup: nickname.nameLookup,
+      },
     });
     return Response.json({ ok: true, name: parsed.data.name });
   } catch (error) {
+    if (isNicknameUniqueConflict(error)) {
+      return Response.json({ error: "이미 사용 중인 닉네임입니다." }, { status: 409 });
+    }
     return apiError(error, "프로필을 저장하지 못했습니다.");
   }
 }
@@ -45,9 +52,11 @@ export async function DELETE(request: Request) {
         status: "DELETED",
         authVersion: { increment: 1 },
         nameEncrypted: encryptUserPii(user.id, "name", "탈퇴한 사용자"),
+        nameLookup: null,
         imageEncrypted: null,
-        // 탈퇴 후 같은 카카오 계정으로 다시 가입할 수 있도록 조회 키를 무효화합니다.
-        emailLookup: `deleted:${randomUUID()}`,
+        passwordHash: null,
+        // 탈퇴 후 같은 loginId 또는 카카오 이메일로 다시 가입할 수 있도록 조회 키를 무효화합니다.
+        loginIdentifierLookup: `deleted:${randomUUID()}`,
       },
     });
     await unlink(getAvatarPath(user.id)).catch(() => undefined);

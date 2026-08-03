@@ -2,8 +2,8 @@ import { z } from "zod";
 import { canManageBoardSettings, canReadEffectiveBoard, getEffectiveBoardAccess, isBoardScopedManagement, requireActiveUser } from "@/lib/auth/authorization";
 import { createAuditLogData } from "@/lib/auth/audit";
 import { followBoard, recordBoardActivity } from "@/lib/board/activity";
-import { maskEmail } from "@/lib/security/pii-crypto";
-import { decryptUserEmail, toPublicAuthorDTO } from "@/lib/users/repository";
+import { maskLoginIdentifier } from "@/lib/security/pii-crypto";
+import { decryptUserLoginIdentifier, toPublicAuthorDTO } from "@/lib/users/repository";
 import { apiError, assertSameOrigin } from "@/lib/http";
 import { createNotification } from "@/lib/notifications/create";
 import { getPrisma } from "@/lib/prisma";
@@ -31,7 +31,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ boa
         status: true,
         createdAt: true,
         updatedAt: true,
-        user: { select: { id: true, nameEncrypted: true, emailEncrypted: true, imageEncrypted: true } },
+        user: { select: { id: true, nameEncrypted: true, loginIdentifierEncrypted: true, imageEncrypted: true } },
       },
     });
     return Response.json({
@@ -39,7 +39,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ boa
         ...item,
         user: {
           ...toPublicAuthorDTO(item.user),
-          email: maskEmail(decryptUserEmail(item.user)),
+          loginIdentifier: maskLoginIdentifier(decryptUserLoginIdentifier(item.user)),
         },
       })),
     });

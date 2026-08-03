@@ -134,10 +134,31 @@ enum SchoolGroupType {
   DEPARTMENT
 }
 
+enum SchoolLevel {
+  ELEMENTARY
+  MIDDLE
+  HIGH
+}
+
+enum SchoolOperatingStatus {
+  OPERATING
+  PLANNED
+  INACTIVE
+}
+
 enum TeacherApprovalStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum AuthSecurityEventType {
+  LOGIN_SUCCESS
+  LOGIN_FAILURE
+  LOGIN_RATE_LIMITED
+  REGISTER_SUCCESS
+  REGISTER_REJECTED
+  REGISTER_RATE_LIMITED
 }
 
 enum NotificationType {
@@ -207,25 +228,42 @@ enum AdminAuditAction {
   SCHOOL_GROUP_DELETED
   SCHOOL_REPRESENTATIVE_GRANTED
   SCHOOL_REPRESENTATIVE_REVOKED
+  STUDENT_ACADEMIC_STATUS_CHANGED
+  STUDENTS_CLASS_MOVED
+  ACADEMIC_YEAR_PROMOTED
   TEACHER_APPROVAL_APPROVED
   TEACHER_APPROVAL_REJECTED
+  STUDENT_ROSTER_IMPORTED
+  USER_PASSWORD_RESET
 }
 
 model User {
   id                     String     @id @default(cuid())
-  emailEncrypted         String
-  emailLookup            String     @unique
+  // 비밀번호 계정은 영문·숫자 loginId, 카카오 계정은 검증된 이메일을 저장합니다. 원문은
+  // AES-GCM으로 암호화하고 로그인·중복 검사에는 HMAC 조회 키만 사용합니다.
+  loginIdentifierEncrypted String
+  loginIdentifierLookup    String     @unique
+  // loginId 비밀번호 로그인용 단방향 scrypt 해시입니다. 카카오 전용 계정은 null이며
+  // 평문·복호화 가능한 비밀번호는 저장하지 않습니다.
+  passwordHash           String?
+  // 관리자가 일괄 생성하거나 비밀번호를 초기화한 계정은 임시 비밀번호로만 로그인할 수
+  // 있습니다. true인 동안 proxy.ts가 비밀번호 변경 화면 외의 접근을 차단합니다.
+  mustChangePassword     Boolean    @default(false)
   nameEncrypted          String?
+  // 공개 닉네임 원문은 계속 암호화하고, 중복 판정에는 정규화한 닉네임의 HMAC만 사용합니다.
+  nameLookup             String?    @unique
   imageEncrypted         String?
   role                   UserRole   @default(STUDENT)
   status                 UserStatus @default(ACTIVE)
   authVersion            Int        @default(1)
   schoolId               String?
   schoolGroupId          String?
+  // 학생 역할의 학교 출석번호입니다. 학년·반은 SchoolGroup → SchoolGrade 관계로 보존합니다.
+  studentNumber          Int?
   // TEACHER 역할에서만 의미가 있습니다. 이 학교(schoolId) 안에서 학생·교사 반/부서 배치와
   // 반/부서 생성·수정·삭제를 할 수 있는 "학교 대표교사"인지. SUPER_ADMIN만 부여·회수합니다.
   isSchoolRepresentative Boolean    @default(false)
-  // 새 카카오 이메일로 처음 가입한 사용자는 프로필·학교·반/부서를 직접 고른 뒤 이 시각이
+  // 새 카카오 또는 일반 loginId 계정은 프로필·학교·반/부서를 직접 고른 뒤 이 시각이
   // 채워집니다. null인 동안 proxy.ts가 온보딩 외 화면과 수정 API 접근을 막습니다.
   onboardingCompletedAt  DateTime?
   lastLoginAt            DateTime?
@@ -257,36 +295,99 @@ model User {
   school                  School?                  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
   schoolGroup             SchoolGroup?             @relation(fields: [schoolGroupId], references: [id], onDelete: SetNull)
 
+  // 같은 학급 안에서는 출석번호가 겹치지 않게 합니다. PostgreSQL은 null을 서로 다른 값으로
+  // 취급하므로 기존의 번호 미지정 학생은 그대로 둘 수 있습니다.
+  @@unique([schoolGroupId, studentNumber])
   @@index([schoolId, role, status])
   @@index([schoolGroupId, role, status])
   @@index([role, status, createdAt])
 }
 
+// 로그인 제한은 프로세스 메모리가 아니라 DB에 저장해 재시작·다중 인스턴스에서도 공유합니다.
+// key에는 IP나 로그인 식별자 원문이 아닌 목적별 HMAC만 들어갑니다.
+model AuthRateLimit {
+  key             String    @id
+  category        String
+  count           Int       @default(0)
+  windowStartedAt DateTime
+  blockedUntil    DateTime?
+  expiresAt       DateTime
+  updatedAt       DateTime  @updatedAt
+
+  @@index([category, expiresAt])
+  @@index([expiresAt])
+}
+
+// 같은 시간대·계정·IP의 인증 이벤트는 한 행에 집계해 공격자가 로그 테이블 자체를
+// 무한히 키우기 어렵게 합니다. accountLookup/ipLookup 역시 HMAC 값입니다.
+model AuthSecurityEvent {
+  key           String                @id
+  type          AuthSecurityEventType
+  accountLookup String?
+  ipLookup      String
+  userId        String?
+  count         Int                   @default(1)
+  firstSeenAt   DateTime              @default(now())
+  lastSeenAt    DateTime              @updatedAt
+  expiresAt     DateTime
+
+  @@index([type, lastSeenAt])
+  @@index([accountLookup, lastSeenAt])
+  @@index([ipLookup, lastSeenAt])
+  @@index([expiresAt])
+}
+
 model School {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String                @id @default(cuid())
+  name            String                @unique
+  code            String?               @unique
+  level           SchoolLevel           @default(HIGH)
+  district        String?
+  operatingStatus SchoolOperatingStatus @default(OPERATING)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
 
   groups                  SchoolGroup[]
+  grades                  SchoolGrade[]
   users                   User[]
   teacherApprovalRequests TeacherApprovalRequest[]
 }
 
-model SchoolGroup {
-  id        String          @id @default(cuid())
+// 학생 학급을 이름 문자열 하나로 뭉치지 않고 학교 → 학년 → 반 순서로 관리합니다.
+// 교사 부서는 학년과 무관하므로 기존 SchoolGroup(type=DEPARTMENT)을 그대로 사용합니다.
+model SchoolGrade {
+  id        String   @id @default(cuid())
   schoolId  String
-  name      String
-  type      SchoolGroupType
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  grade     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  school  School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  classes SchoolGroup[]
+
+  @@unique([schoolId, grade])
+  @@index([schoolId, grade])
+}
+
+model SchoolGroup {
+  id          String          @id @default(cuid())
+  schoolId    String
+  name        String
+  type        SchoolGroupType
+  gradeId     String?
+  classNumber Int?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   school                  School                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  grade                   SchoolGrade?             @relation(fields: [gradeId], references: [id], onDelete: Cascade)
   users                   User[]
   teacherApprovalRequests TeacherApprovalRequest[]
 
   @@unique([schoolId, type, name])
+  @@unique([gradeId, classNumber])
   @@index([schoolId, type, name])
+  @@index([gradeId, classNumber])
 }
 
 model TeacherApprovalRequest {

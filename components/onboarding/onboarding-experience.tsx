@@ -28,17 +28,25 @@ type UserRole = "SUPER_ADMIN" | "ADMIN" | "TEACHER" | "STUDENT";
 type SchoolOption = {
   id: string;
   name: string;
-  groups: Array<{ id: string; name: string; type: "CLASS" | "DEPARTMENT" }>;
+  groups: Array<{
+    id: string;
+    name: string;
+    type: "CLASS" | "DEPARTMENT";
+    grade: number | null;
+    classNumber: number | null;
+  }>;
 };
 
 type OnboardingProps = {
   initialName: string | null;
   initialImage: string | null;
-  email: string;
+  loginIdentifier: string;
+  loginType: "LOGIN_ID" | "KAKAO_EMAIL";
   role: UserRole;
   initialAccountType: "STUDENT" | "TEACHER";
   initialSchoolId: string | null;
   initialSchoolGroupId: string | null;
+  initialStudentNumber: number | null;
   rejectionReason: string | null;
   schools: SchoolOption[];
   nextPath: string;
@@ -61,15 +69,18 @@ export function OnboardingExperience(props: OnboardingProps) {
 function OnboardingForm({
   initialName,
   initialImage,
-  email,
+  loginIdentifier,
+  loginType,
   role,
   initialAccountType,
   initialSchoolId,
   initialSchoolGroupId,
+  initialStudentNumber,
   rejectionReason,
   schools,
   nextPath,
 }: OnboardingProps) {
+  const usesEmailLogin = loginType === "KAKAO_EMAIL";
   const { update: updateSession } = useSession();
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(0);
@@ -78,25 +89,68 @@ function OnboardingForm({
   const [accountType, setAccountType] = useState(initialAccountType);
   const [schoolId, setSchoolId] = useState(initialSchoolId ?? "");
   const [schoolGroupId, setSchoolGroupId] = useState(initialSchoolGroupId ?? "");
-  const [busy, setBusy] = useState<"photo" | "remove-photo" | "complete" | "logout" | null>(null);
+  const initialGroup = schools.flatMap((school) => school.groups).find((group) => group.id === initialSchoolGroupId);
+  const [grade, setGrade] = useState(initialGroup?.grade?.toString() ?? "");
+  const [studentNumber, setStudentNumber] = useState(initialStudentNumber?.toString() ?? "");
+  const [busy, setBusy] = useState<"nickname" | "photo" | "remove-photo" | "complete" | "logout" | null>(null);
   const [error, setError] = useState("");
+  const [nicknameStatus, setNicknameStatus] = useState<"idle" | "available" | "taken">("idle");
 
   const roleLocked = role !== "STUDENT";
   const expectedGroupType = accountType === "STUDENT" ? "CLASS" : "DEPARTMENT";
   const selectedSchool = schools.find((school) => school.id === schoolId) ?? null;
-  const availableGroups = selectedSchool?.groups.filter((group) => group.type === expectedGroupType) ?? [];
+  const gradeOptions = [...new Set(
+    selectedSchool?.groups
+      .filter((group) => group.type === "CLASS" && group.grade !== null && group.classNumber !== null)
+      .map((group) => group.grade as number) ?? [],
+  )].sort((a, b) => a - b);
+  const availableGroups = selectedSchool?.groups.filter((group) => (
+    group.type === expectedGroupType
+    && (accountType !== "STUDENT" || (group.grade?.toString() === grade && group.classNumber !== null))
+  )) ?? [];
   const selectedGroup = availableGroups.find((group) => group.id === schoolGroupId) ?? null;
   const groupLabel = expectedGroupType === "CLASS" ? "소속 반" : "소속 부서";
   const pending = busy !== null;
 
-  function moveNext() {
+  async function checkNickname() {
+    setError("");
+    if (!name.trim()) {
+      setError("패드와 댓글에 표시할 닉네임을 입력해 주세요.");
+      return false;
+    }
+    setBusy("nickname");
+    try {
+      const response = await fetch("/api/me/nickname-availability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const result = await response.json() as { available?: boolean; normalized?: string; error?: string };
+      if (!response.ok || !result.available) {
+        setNicknameStatus("taken");
+        throw new Error(result.error || "이미 사용 중인 닉네임입니다.");
+      }
+      if (result.normalized) setName(result.normalized);
+      setNicknameStatus("available");
+      return true;
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "닉네임 사용 여부를 확인하지 못했습니다.");
+      return false;
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function moveNext() {
     setError("");
     if (step === 0 && !name.trim()) {
       setError("패드와 댓글에 표시할 닉네임을 입력해 주세요.");
       return;
     }
-    if (step === 1 && (!selectedSchool || !selectedGroup)) {
-      setError(`학교와 ${groupLabel}를 모두 선택해 주세요.`);
+    if (step === 0 && nicknameStatus !== "available" && !await checkNickname()) return;
+    const parsedStudentNumber = Number(studentNumber);
+    if (step === 1 && (!selectedSchool || !selectedGroup || (accountType === "STUDENT" && (!Number.isInteger(parsedStudentNumber) || parsedStudentNumber < 1 || parsedStudentNumber > 99)))) {
+      setError(accountType === "STUDENT" ? "학교, 학년, 반과 1~99 사이의 번호를 모두 입력해 주세요." : `학교와 ${groupLabel}를 모두 선택해 주세요.`);
       return;
     }
     setStep((current) => Math.min(2, current + 1));
@@ -109,6 +163,7 @@ function OnboardingForm({
 
   function changeSchool(nextSchoolId: string) {
     setSchoolId(nextSchoolId);
+    setGrade("");
     setSchoolGroupId("");
     setError("");
   }
@@ -116,7 +171,9 @@ function OnboardingForm({
   function changeAccountType(nextAccountType: "STUDENT" | "TEACHER") {
     if (roleLocked || nextAccountType === accountType) return;
     setAccountType(nextAccountType);
+    setGrade("");
     setSchoolGroupId("");
+    if (nextAccountType === "TEACHER") setStudentNumber("");
     setError("");
   }
 
@@ -162,10 +219,11 @@ function OnboardingForm({
   async function completeOnboarding(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (step < 2) {
-      moveNext();
+      await moveNext();
       return;
     }
-    if (!selectedSchool || !selectedGroup || !name.trim()) {
+    const parsedStudentNumber = Number(studentNumber);
+    if (!selectedSchool || !selectedGroup || !name.trim() || (accountType === "STUDENT" && (!Number.isInteger(parsedStudentNumber) || parsedStudentNumber < 1 || parsedStudentNumber > 99))) {
       setError("가입 정보를 다시 확인해 주세요.");
       return;
     }
@@ -175,10 +233,21 @@ function OnboardingForm({
       const response = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, accountType, schoolId: selectedSchool.id, schoolGroupId: selectedGroup.id }),
+        body: JSON.stringify({
+          name,
+          accountType,
+          schoolId: selectedSchool.id,
+          schoolGroupId: selectedGroup.id,
+          studentNumber: accountType === "STUDENT" ? parsedStudentNumber : null,
+        }),
       });
       const result = await response.json() as { error?: string; approvalPending?: boolean };
-      if (!response.ok && response.status !== 409) throw new Error(result.error || "가입 정보를 저장하지 못했습니다.");
+      // 이미 생성된 교사 승인 요청은 대기 화면으로 복구할 수 있지만, 같은 409라도 닉네임
+      // 동시 선점이나 완료된 온보딩은 성공으로 취급하면 안 됩니다.
+      if (!response.ok && !(response.status === 409 && result.approvalPending)) {
+        if (response.status === 409 && result.error?.includes("닉네임")) setNicknameStatus("taken");
+        throw new Error(result.error || "가입 정보를 저장하지 못했습니다.");
+      }
       const session = await updateSession({
         onboardingCompleted: !result.approvalPending,
         onboardingState: result.approvalPending ? "TEACHER_PENDING" : "COMPLETE",
@@ -232,7 +301,7 @@ function OnboardingForm({
           </ol>
           <div className={styles.privacyNote}>
             <ShieldCheck size={18} aria-hidden />
-            <span><b>필요한 정보만 저장해요</b><small>이메일과 프로필은 암호화해 보관합니다.</small></span>
+            <span><b>필요한 정보만 저장해요</b><small>로그인 정보와 프로필은 암호화해 보관합니다.</small></span>
           </div>
         </aside>
 
@@ -245,7 +314,7 @@ function OnboardingForm({
 
           <div className={styles.panel} hidden={step !== 0}>
             <div className={styles.photoEditor}>
-              <div className={styles.avatarWrap}><Avatar name={name} email={email} image={image} size="medium" /></div>
+              <div className={styles.avatarWrap}><Avatar name={name} identifier={loginIdentifier} image={image} size="medium" /></div>
               <div className={styles.photoCopy}>
                 <b>프로필 사진</b>
                 <small>정사각형 이미지가 가장 자연스럽게 보여요.</small>
@@ -261,12 +330,15 @@ function OnboardingForm({
             </div>
             <label className={styles.field}>
               <span><UserRound size={16} aria-hidden />닉네임</span>
-              <input value={name} onChange={(event) => setName(event.target.value)} maxLength={60} placeholder="패드에 표시할 이름" autoFocus />
-              <small><span>패드·게시물·댓글에 표시됩니다.</span><b>{name.length}/60</b></small>
+              <div className={styles.nicknameRow}>
+                <input value={name} onChange={(event) => { setName(event.target.value); setNicknameStatus("idle"); setError(""); }} maxLength={60} placeholder="패드에 표시할 이름" autoFocus disabled={pending} />
+                <button type="button" className="button soft" disabled={pending || !name.trim()} onClick={() => void checkNickname()}>{busy === "nickname" ? "확인 중…" : "중복 확인"}</button>
+              </div>
+              <small><span data-status={nicknameStatus}>{nicknameStatus === "available" ? "사용할 수 있는 닉네임입니다." : nicknameStatus === "taken" ? "다른 닉네임을 입력해 주세요." : "패드·게시물·댓글에 표시됩니다."}</span><b>{name.length}/60</b></small>
             </label>
             <div className={styles.readonlyField}>
-              <span><Mail size={16} aria-hidden />카카오 이메일</span>
-              <b>{email}</b>
+              <span>{usesEmailLogin ? <Mail size={16} aria-hidden /> : <UserRound size={16} aria-hidden />}{usesEmailLogin ? "로그인 이메일" : "로그인 아이디"}</span>
+              <b>{loginIdentifier}</b>
               <small>로그인 확인에만 사용되며 다른 사용자에게 공개하지 않습니다.</small>
             </div>
           </div>
@@ -304,24 +376,50 @@ function OnboardingForm({
               </select>
               <small><span>관리자가 등록한 학교만 선택할 수 있어요.</span></small>
             </label>
-            <label className={styles.field}>
-              <span><Users size={16} aria-hidden />{groupLabel}</span>
-              <select value={schoolGroupId} onChange={(event) => { setSchoolGroupId(event.target.value); setError(""); }} disabled={!selectedSchool}>
-                <option value="">{selectedSchool ? `${groupLabel}를 선택해 주세요` : "학교를 먼저 선택해 주세요"}</option>
-                {availableGroups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
-              </select>
-              {selectedSchool && availableGroups.length === 0
-                ? <small className={styles.warning}><span>이 학교에 선택 가능한 {groupLabel}가 없습니다. 학교 관리자에게 문의해 주세요.</span></small>
-                : <small><span>같은 학교 구성원을 찾고 관리할 때 사용됩니다.</span></small>}
-            </label>
+            {accountType === "STUDENT" ? (
+              <div className={styles.studentOrganization}>
+                <label className={styles.field}>
+                  <span><GraduationCap size={16} aria-hidden />학년</span>
+                  <select value={grade} onChange={(event) => { setGrade(event.target.value); setSchoolGroupId(""); setError(""); }} disabled={!selectedSchool}>
+                    <option value="">{selectedSchool ? "학년 선택" : "학교 먼저 선택"}</option>
+                    {gradeOptions.map((item) => <option key={item} value={item}>{item}학년</option>)}
+                  </select>
+                </label>
+                <label className={styles.field}>
+                  <span><Users size={16} aria-hidden />반</span>
+                  <select value={schoolGroupId} onChange={(event) => { setSchoolGroupId(event.target.value); setError(""); }} disabled={!selectedSchool || !grade}>
+                    <option value="">{grade ? "반 선택" : "학년 먼저 선택"}</option>
+                    {availableGroups.map((group) => <option key={group.id} value={group.id}>{group.classNumber}반</option>)}
+                  </select>
+                </label>
+                <label className={styles.field}>
+                  <span><UserRound size={16} aria-hidden />번호</span>
+                  <input type="number" min={1} max={99} step={1} inputMode="numeric" value={studentNumber} onChange={(event) => { setStudentNumber(event.target.value); setError(""); }} placeholder="예: 6" />
+                </label>
+                {selectedSchool && gradeOptions.length === 0
+                  ? <small className={styles.organizationHint} data-warning>이 학교에 학년·반이 없습니다. 학교 관리자에게 문의해 주세요.</small>
+                  : <small className={styles.organizationHint}>학년·반·번호는 같은 학교 구성원을 찾고 명단을 관리할 때 사용됩니다.</small>}
+              </div>
+            ) : (
+              <label className={styles.field}>
+                <span><Users size={16} aria-hidden />{groupLabel}</span>
+                <select value={schoolGroupId} onChange={(event) => { setSchoolGroupId(event.target.value); setError(""); }} disabled={!selectedSchool}>
+                  <option value="">{selectedSchool ? `${groupLabel}를 선택해 주세요` : "학교를 먼저 선택해 주세요"}</option>
+                  {availableGroups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+                </select>
+                {selectedSchool && availableGroups.length === 0
+                  ? <small className={styles.warning}><span>이 학교에 선택 가능한 {groupLabel}가 없습니다. 학교 관리자에게 문의해 주세요.</span></small>
+                  : <small><span>같은 학교 구성원을 찾고 관리할 때 사용됩니다.</span></small>}
+              </label>
+            )}
           </div>
 
           <div className={styles.panel} hidden={step !== 2}>
             <div className={styles.completeIcon}><CheckCircle2 size={34} aria-hidden /></div>
             <dl className={styles.summary}>
-              <div><dt>프로필</dt><dd><Avatar name={name} email={email} image={image} size="small" /><span><b>{name.trim()}</b><small>{email}</small></span></dd></div>
+              <div><dt>프로필</dt><dd><Avatar name={name} identifier={loginIdentifier} image={image} size="small" /><span><b>{name.trim()}</b><small>{loginIdentifier}</small></span></dd></div>
               <div><dt>가입 유형</dt><dd>{accountType === "STUDENT" ? <GraduationCap size={18} aria-hidden /> : <Building2 size={18} aria-hidden />}<span><b>{accountType === "STUDENT" ? "학생" : "교사 승인 요청"}</b><small>{accountType === "STUDENT" ? "가입 후 바로 이용할 수 있어요." : "승인 후 교사 권한이 부여돼요."}</small></span></dd></div>
-              <div><dt>학교</dt><dd><School size={18} aria-hidden /><span><b>{selectedSchool?.name}</b><small>{selectedGroup?.name}</small></span></dd></div>
+              <div><dt>학교</dt><dd><School size={18} aria-hidden /><span><b>{selectedSchool?.name}</b><small>{selectedGroup?.name}{accountType === "STUDENT" ? ` · ${studentNumber}번` : ""}</small></span></dd></div>
             </dl>
             <p className={styles.completeNote}>{accountType === "STUDENT" ? "가입을 완료하면 내 패드 화면으로 이동합니다." : "신청 후 승인 대기 화면으로 이동합니다. 승인 결과는 다시 로그인해도 유지됩니다."} 학교 소속 변경이 필요하면 관리자에게 요청해 주세요.</p>
           </div>
@@ -332,7 +430,7 @@ function OnboardingForm({
             {step > 0 && <button type="button" className="button ghost" disabled={pending} onClick={moveBack}><ArrowLeft size={16} aria-hidden />이전</button>}
             <span />
             {step < 2
-              ? <button type="button" className="button primary" disabled={pending} onClick={moveNext}>다음<ArrowRight size={16} aria-hidden /></button>
+              ? <button type="button" className="button primary" disabled={pending} onClick={() => void moveNext()}>다음<ArrowRight size={16} aria-hidden /></button>
               : <button type="submit" className="button primary" disabled={pending}>{busy === "complete" ? <><LoaderCircle size={16} className="spin" aria-hidden />처리 중…</> : <>{accountType === "STUDENT" ? "PyxPad 시작하기" : "교사 승인 요청"}<ArrowRight size={16} aria-hidden /></>}</button>}
           </footer>
         </form>

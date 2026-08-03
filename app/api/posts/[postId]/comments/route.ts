@@ -8,6 +8,7 @@ import { apiError, assertSameOrigin } from "@/lib/http";
 import { createNotification } from "@/lib/notifications/create";
 import { getPrisma } from "@/lib/prisma";
 import { publishBoardEvent } from "@/lib/realtime/board-events";
+import { assertRateLimit } from "@/lib/security/rate-limit";
 import { toPublicAuthorDTO } from "@/lib/users/repository";
 
 const commentSelect = {
@@ -100,6 +101,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ pos
   try {
     assertSameOrigin(request);
     const user = await requireActiveUser();
+    // 댓글 한 건마다 카운트 재집계·활동 로그·개인 알림·SSE 발행이 따라붙습니다. 수업 중 활발한
+    // 토론(분당 몇 건)은 통과하고 스크립트 도배만 걸리는 선입니다.
+    assertRateLimit(request, {
+      scope: "comment-create",
+      userId: user.id,
+      windowMs: 60_000,
+      maxAttempts: 30,
+      message: "댓글을 너무 빠르게 작성했습니다. 잠시 후 다시 시도해 주세요.",
+    });
     const { postId } = await params;
     const post = await findPost(postId);
     if (!post) return Response.json({ error: "게시물을 찾을 수 없습니다." }, { status: 404 });

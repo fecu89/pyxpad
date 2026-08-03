@@ -8,9 +8,10 @@ import { Logo } from "@/components/ui/logo";
 import { LogoutButton, ProfileButton } from "@/components/home/home-actions";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import type { DashboardFolder } from "@/lib/dashboard/types";
+import { DASHBOARD_PATH } from "@/lib/routes";
 
 export type SidebarRecentBoard = { id: string; slug: string; title: string };
-export type SidebarUser = { name: string | null; image: string | null; email: string | null };
+export type SidebarUser = { name: string | null; image: string | null; loginIdentifier: string };
 
 export function AppSidebar({
   recentBoards = [],
@@ -94,7 +95,7 @@ export function AppSidebar({
         aria-label="사이드바"
       >
         <div className="app-sidebar-heading">
-          <Link href="/" className="app-sidebar-brand" onClick={() => setOpen(false)}>
+          <Link href={DASHBOARD_PATH} className="app-sidebar-brand" onClick={() => setOpen(false)}>
             <Logo size={26} />
             <span>pyxpad</span>
           </Link>
@@ -103,7 +104,7 @@ export function AppSidebar({
           </button>
         </div>
         <nav className="app-sidebar-nav" aria-label="주요 메뉴">
-          {link("/", pathname === "/", <LayoutGrid size={17} aria-hidden />, "내 패드")}
+          {link(DASHBOARD_PATH, pathname === DASHBOARD_PATH, <LayoutGrid size={17} aria-hidden />, "내 패드")}
           {link("/favorites", pathname === "/favorites", <Star size={17} aria-hidden />, "즐겨찾기")}
           {link("/search", pathname === "/search", <Search size={17} aria-hidden />, "검색")}
           {link("/archived", pathname === "/archived", <Archive size={17} aria-hidden />, "보관된 패드")}
@@ -143,7 +144,7 @@ export function AppSidebar({
         </div>
 
         <div className="app-sidebar-bottom">
-          <ProfileButton name={user.name} image={user.image} email={user.email} />
+          <ProfileButton name={user.name} image={user.image} loginIdentifier={user.loginIdentifier} />
           <div className="app-sidebar-bottom-actions">
             {canAccessAdmin && (
               <Link href="/admin" className="icon-button" aria-label="관리자" onClick={() => setOpen(false)}>

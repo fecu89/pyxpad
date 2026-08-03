@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Eye, KeyRound, LoaderCircle, LogOut, ShieldCheck, Trash2, UserCog } from "lucide-react";
+import { Eye, KeyRound, LoaderCircle, LogOut, RefreshCcw, ShieldCheck, Trash2, UserCog } from "lucide-react";
 import type { AdminActor, AdminUserRecord, SystemPermission } from "@/components/admin/types";
 import { Modal } from "@/components/ui/modal";
 
@@ -73,8 +73,14 @@ export function UserAdminActions({
   const [isSchoolRepresentative, setIsSchoolRepresentative] = useState(user.isSchoolRepresentative);
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState("");
-  const [pii, setPii] = useState<{ email: string; name: string | null; image: string | null } | null>(null);
-  const clearPii = useCallback(() => setPii(null), []);
+  const [pii, setPii] = useState<{
+    loginIdentifier: string;
+    loginType: "LOGIN_ID" | "KAKAO_EMAIL";
+    name: string | null;
+    image: string | null;
+  } | null>(null);
+  const [temporaryPassword, setTemporaryPassword] = useState("");
+  const clearPii = useCallback(() => { setPii(null); setTemporaryPassword(""); }, []);
   const { pending, run } = useAdminAction(reason, setMessage, clearPii);
   const actorPermissions = new Set(actor.systemPermissions);
   const targetIsNonAdmin = user.role === "STUDENT" || user.role === "TEACHER";
@@ -130,6 +136,22 @@ export function UserAdminActions({
     });
   }
 
+  async function resetPassword() {
+    if (!window.confirm(`${user.name || "이 사용자"}의 비밀번호를 임시 비밀번호로 초기화할까요?\n기존 세션은 모두 해제됩니다.`)) return;
+    await run("비밀번호 초기화 사유를 3자 이상 입력해 주세요.", async () => {
+      const result = await responseJson(await fetch(`/api/admin/users/${user.id}/password-reset`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      }));
+      setTemporaryPassword(result.temporaryPassword);
+      onUpdated({ ...user, authVersion: result.authVersion, mustChangePassword: true });
+      onAuditChanged();
+      setMessage("임시 비밀번호를 발급하고 기존 로그인 세션을 모두 해제했습니다.");
+      setReason("");
+    });
+  }
+
   async function viewPii() {
     await run("개인정보 조회 사유를 3자 이상 입력해 주세요.", async () => {
       const result = await responseJson(await fetch(`/api/admin/users/${user.id}/pii`, {
@@ -172,7 +194,7 @@ export function UserAdminActions({
       <div className="admin-user-actions">
         <section className="admin-user-summary">
           <span className={`admin-avatar ${user.status !== "ACTIVE" ? "suspended" : ""}`}>{(user.name || "?")[0]}</span>
-          <div><b>{user.name || "이름 없음"}</b><span>{user.maskedEmail}</span><small>소유 패드 {user.ownedBoardCount} · 참여 패드 {user.memberBoardCount} · 최근 로그인 {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString("ko-KR") : "없음"}</small></div>
+          <div><b>{user.name || "이름 없음"}</b><span>{user.maskedLoginIdentifier}</span><small>소유 패드 {user.ownedBoardCount} · 참여 패드 {user.memberBoardCount} · 최근 로그인 {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString("ko-KR") : "없음"}</small></div>
         </section>
 
         <label className="admin-action-reason">
@@ -200,6 +222,7 @@ export function UserAdminActions({
         )}
 
         <section className="admin-sensitive-actions" aria-label="보안 작업">
+          {canRevokeSessions && user.hasPasswordCredential && actor.id !== user.id ? <button type="button" className="button ghost" onClick={() => void resetPassword()} disabled={pending}><RefreshCcw size={15} />비밀번호 초기화</button> : null}
           {canRevokeSessions && <button type="button" className="button ghost" onClick={() => void revokeSessions()} disabled={pending}><LogOut size={15} />세션 모두 해제</button>}
           {canViewPii && <button type="button" className="button ghost" onClick={() => void viewPii()} disabled={pending}><Eye size={15} />개인정보 원문 보기</button>}
           {actor.role === "SUPER_ADMIN" && actor.id !== user.id && <button type="button" className="button danger" onClick={() => void deleteAccount()} disabled={pending}><Trash2 size={15} />회원 삭제</button>}
@@ -207,7 +230,8 @@ export function UserAdminActions({
 
         {pending && <p className="admin-action-pending"><LoaderCircle size={15} className="spin" />처리 중입니다.</p>}
         {message && <p className="admin-message" aria-live="polite">{message}</p>}
-        {pii && <dl className="pii-result"><div><dt>이메일</dt><dd>{pii.email}</dd></div><div><dt>이름</dt><dd>{pii.name || "없음"}</dd></div><div><dt>프로필 URL</dt><dd>{pii.image || "없음"}</dd></div></dl>}
+        {temporaryPassword ? <div className="admin-temporary-password" role="status"><span><b>임시 비밀번호</b><small>이 창을 닫으면 다시 확인할 수 없습니다.</small></span><code>{temporaryPassword}</code><button type="button" className="button soft" onClick={() => void navigator.clipboard.writeText(temporaryPassword)}>복사</button></div> : null}
+        {pii && <dl className="pii-result"><div><dt>{pii.loginType === "KAKAO_EMAIL" ? "카카오 이메일" : "로그인 아이디"}</dt><dd>{pii.loginIdentifier}</dd></div><div><dt>이름</dt><dd>{pii.name || "없음"}</dd></div><div><dt>프로필 URL</dt><dd>{pii.image || "없음"}</dd></div></dl>}
         <p className="admin-policy-note">민감한 작업은 사유와 함께 감사 로그에 기록됩니다. 개인정보 원문은 필요한 확인을 마치면 모달을 닫아 주세요.</p>
       </div>
     </Modal>

@@ -2,7 +2,16 @@ import { canReadEffectiveBoard, getEffectiveBoardAccess } from "@/lib/auth/autho
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { apiError } from "@/lib/http";
 import { getPrisma } from "@/lib/prisma";
+import { assertRateLimit } from "@/lib/security/rate-limit";
 import { toPublicAuthorDTO } from "@/lib/users/repository";
+
+// 잘못된 날짜 문자열을 그대로 new Date()에 넣으면 Invalid Date가 Prisma까지 내려가 500에
+// 가까운 오류로 끝납니다. 파싱되지 않으면 그 필터를 무시합니다.
+function parseDate(value: string | null) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
 
 export async function GET(request: Request, { params }: { params: Promise<{ boardId: string }> }) {
   try {
@@ -12,12 +21,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ boar
     if (!access || !canReadEffectiveBoard(currentUser, access)) {
       return Response.json({ error: "활동을 볼 권한이 없습니다." }, { status: 403 });
     }
+    // 공개 보드는 비로그인도 커서 페이지네이션을 무한 반복할 수 있어 상한을 둡니다.
+    assertRateLimit(request, {
+      scope: "board-activity",
+      userId: currentUser?.id ?? null,
+      windowMs: 60_000,
+      maxAttempts: 120,
+      message: "활동 조회를 너무 자주 요청했습니다. 잠시 후 다시 시도해 주세요.",
+    });
 
     const url = new URL(request.url);
     const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit") ?? "30") || 30));
     const actorId = url.searchParams.get("actorId") || undefined;
-    const since = url.searchParams.get("since");
-    const until = url.searchParams.get("until");
+    const since = parseDate(url.searchParams.get("since"));
+    const until = parseDate(url.searchParams.get("until"));
     const cursor = url.searchParams.get("cursor") || undefined;
 
     const prisma = getPrisma();
@@ -25,7 +42,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ boar
       where: {
         boardId,
         ...(actorId ? { actorId } : {}),
-        ...(since || until ? { createdAt: { ...(since ? { gte: new Date(since) } : {}), ...(until ? { lte: new Date(until) } : {}) } } : {}),
+        ...(since || until ? { createdAt: { ...(since ? { gte: since } : {}), ...(until ? { lte: until } : {}) } } : {}),
       },
       orderBy: { createdAt: "desc" },
       take: limit + 1,

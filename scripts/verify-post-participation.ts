@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { config } from "dotenv";
 import { encode } from "next-auth/jwt";
 import { getPrisma } from "../lib/prisma";
-import { createEmailLookup, encryptOptionalUserPii, encryptUserPii } from "../lib/security/pii-crypto-core";
+import { createLoginIdentifierLookup, encryptOptionalUserPii, encryptUserPii } from "../lib/security/pii-crypto-core";
 
 config({ path: ".env.local", quiet: true });
 config({ quiet: true });
@@ -82,8 +82,8 @@ async function main() {
     await prisma.user.create({
       data: {
         id: deletedMentionUserId,
-        emailLookup: createEmailLookup(deletedMentionEmail),
-        emailEncrypted: encryptUserPii(deletedMentionUserId, "email", deletedMentionEmail),
+        loginIdentifierLookup: createLoginIdentifierLookup(deletedMentionEmail),
+        loginIdentifierEncrypted: encryptUserPii(deletedMentionUserId, "email", deletedMentionEmail),
         nameEncrypted: encryptOptionalUserPii(deletedMentionUserId, "name", "삭제된 멘션 대상"),
         role: "STUDENT",
         status: "DELETED",

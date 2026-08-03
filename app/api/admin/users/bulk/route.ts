@@ -3,10 +3,11 @@ import { unlink } from "node:fs/promises";
 import { z } from "zod";
 import { AuthorizationError, requireActiveUser, requireRecentAuthentication } from "@/lib/auth/authorization";
 import { createAuditLogData } from "@/lib/auth/audit";
+import { STUDENT_OWNED_BOARD_LIMIT } from "@/lib/board/ownership-limit";
 import { getAvatarPath } from "@/lib/files/paths";
 import { apiError, assertSameOrigin } from "@/lib/http";
 import { getPrisma } from "@/lib/prisma";
-import { encryptUserPii } from "@/lib/security/pii-crypto";
+import { encryptUserLoginIdentifier, encryptUserPii } from "@/lib/security/pii-crypto";
 import { assertCanChangeUserRole, assertCanChangeUserStatus, assertCanManageSchoolPlacement, assertCanManageUserOrganization } from "@/lib/users/admin-policy";
 
 const bulkUpdateSchema = z.object({
@@ -54,7 +55,7 @@ export async function PATCH(request: Request) {
     const prisma = getPrisma();
     const targets = await prisma.user.findMany({
       where: { id: { in: uniqueIds }, status: { not: "DELETED" } },
-      select: { id: true, role: true, status: true, schoolId: true, schoolGroupId: true, _count: { select: { ownedBoards: true } } },
+      select: { id: true, role: true, status: true, schoolId: true, schoolGroupId: true, studentNumber: true, isSchoolRepresentative: true, _count: { select: { ownedBoards: true } } },
     });
     const targetById = new Map(targets.map((target) => [target.id, target]));
 
@@ -97,8 +98,8 @@ export async function PATCH(request: Request) {
           continue;
         }
 
-        if (nextRole === "STUDENT" && target._count.ownedBoards > 0) {
-          skipped.push({ userId, reason: "패드를 소유한 사용자는 먼저 소유권을 이전해야 학생으로 변경할 수 있습니다." });
+        if (nextRole === "STUDENT" && target._count.ownedBoards > STUDENT_OWNED_BOARD_LIMIT) {
+          skipped.push({ userId, reason: `패드를 ${STUDENT_OWNED_BOARD_LIMIT}개 초과 소유해 학생으로 변경할 수 없습니다.` });
           continue;
         }
 
@@ -115,9 +116,29 @@ export async function PATCH(request: Request) {
             if (!matchingGroup) { skipped.push({ userId, reason: "역할에 맞는 학교 소속이 아닙니다." }); continue; }
           }
         }
+        if (nextRole === "STUDENT" && nextSchoolGroupId && target.studentNumber !== null && nextSchoolGroupId !== target.schoolGroupId) {
+          const duplicateNumber = await tx.user.findFirst({
+            where: {
+              id: { not: userId },
+              status: { not: "DELETED" },
+              schoolGroupId: nextSchoolGroupId,
+              studentNumber: target.studentNumber,
+            },
+            select: { id: true },
+          });
+          if (duplicateNumber) {
+            skipped.push({ userId, reason: `선택한 반에는 이미 ${target.studentNumber}번 학생이 있습니다.` });
+            continue;
+          }
+        }
 
         const organizationChanged = nextSchoolId !== target.schoolId || nextSchoolGroupId !== target.schoolGroupId;
-        if (nextRole === target.role && nextStatus === target.status && !organizationChanged) {
+        const nextIsSchoolRepresentative = nextRole === "TEACHER"
+          && nextStatus === "ACTIVE"
+          && nextSchoolId === target.schoolId
+          && target.isSchoolRepresentative;
+        const representativeChanged = nextIsSchoolRepresentative !== target.isSchoolRepresentative;
+        if (nextRole === target.role && nextStatus === target.status && !organizationChanged && !representativeChanged) {
           skipped.push({ userId, reason: "변경된 값이 없습니다." });
           continue;
         }
@@ -129,15 +150,16 @@ export async function PATCH(request: Request) {
 
         if (target.role === "ADMIN" && nextRole !== "ADMIN") await tx.userSystemPermission.deleteMany({ where: { userId } });
         const downgradedMemberships = nextRole === "STUDENT"
-          ? await tx.boardMember.updateMany({ where: { userId, role: { in: ["OWNER", "ADMIN", "EDITOR"] } }, data: { role: "MEMBER" } })
+          ? await tx.boardMember.updateMany({ where: { userId, role: { in: ["ADMIN", "EDITOR"] } }, data: { role: "MEMBER" } })
           : { count: 0 };
-
         await tx.user.update({
           where: { id: userId },
           data: {
             role: nextRole,
             status: nextStatus,
             ...(organizationChanged || nextRole !== target.role ? { schoolId: nextSchoolId, schoolGroupId: nextSchoolGroupId } : {}),
+            ...(nextRole !== target.role && nextRole !== "STUDENT" ? { studentNumber: null } : {}),
+            ...(representativeChanged ? { isSchoolRepresentative: nextIsSchoolRepresentative } : {}),
             authVersion: { increment: 1 },
           },
         });
@@ -150,6 +172,9 @@ export async function PATCH(request: Request) {
         }
         if (organizationChanged) {
           await tx.adminAuditLog.create({ data: createAuditLogData({ actorId: actor.id, targetUserId: userId, action: "USER_ORGANIZATION_CHANGED", entityType: "User", entityId: userId, before: { schoolId: target.schoolId, schoolGroupId: target.schoolGroupId }, after: { schoolId: nextSchoolId, schoolGroupId: nextSchoolGroupId }, reason }) });
+        }
+        if (representativeChanged) {
+          await tx.adminAuditLog.create({ data: createAuditLogData({ actorId: actor.id, targetUserId: userId, action: "SCHOOL_REPRESENTATIVE_REVOKED", entityType: "User", entityId: userId, before: { isSchoolRepresentative: true }, after: { isSchoolRepresentative: false }, reason }) });
         }
         updated.push(userId);
       }
@@ -219,12 +244,16 @@ export async function DELETE(request: Request) {
           data: {
             status: "DELETED",
             authVersion: { increment: 1 },
-            emailLookup: `deleted:${deletedKey}`,
-            emailEncrypted: encryptUserPii(userId, "email", `deleted-${deletedKey}@invalid.local`),
+            loginIdentifierLookup: `deleted:${deletedKey}`,
+            loginIdentifierEncrypted: encryptUserLoginIdentifier(userId, `deleted-${deletedKey}`),
             nameEncrypted: encryptUserPii(userId, "name", "삭제된 사용자"),
+            nameLookup: null,
             imageEncrypted: null,
+            passwordHash: null,
             schoolId: null,
             schoolGroupId: null,
+            studentNumber: null,
+            isSchoolRepresentative: false,
           },
         });
         await tx.adminAuditLog.create({

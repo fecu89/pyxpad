@@ -18,6 +18,7 @@ import { validateUploadedFile } from "@/lib/files/validation";
 import { apiError, assertSameOrigin } from "@/lib/http";
 import { getPrisma } from "@/lib/prisma";
 import { publishBoardEvent } from "@/lib/realtime/board-events";
+import { assertRateLimit } from "@/lib/security/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,6 +71,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ boa
   try {
     assertSameOrigin(request);
     const user = await requireActiveUser();
+    // 배경 이미지도 sharp 변환을 타므로 반복 업로드로 이미지 처리 슬롯을 점유하지 못하게 합니다.
+    assertRateLimit(request, {
+      scope: "board-background-upload",
+      userId: user.id,
+      windowMs: 10 * 60_000,
+      maxAttempts: 20,
+      message: "배경 이미지를 너무 자주 변경했습니다. 잠시 후 다시 시도해 주세요.",
+    });
     const { boardId } = await params;
     const access = await getEffectiveBoardAccess(boardId, user);
     if (!access || !canManageBoardSettings(user, access)) {

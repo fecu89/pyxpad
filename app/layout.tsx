@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import { getMetadata } from "@/utils/seo/getMetadata";
@@ -21,7 +22,10 @@ export const metadata: Metadata = {
 // body가 그려지기 전에 실행되어야 깜빡임(FOUC) 없이 테마가 적용됩니다.
 const THEME_INIT_SCRIPT = `(function(){try{var s=localStorage.getItem('theme');var t=(s==='light'||s==='dark')?s:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`;
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // proxy.ts가 요청마다 새로 만든 CSP nonce입니다. 이게 없으면 아래 인라인 스크립트가
+  // script-src에 막혀 테마 초기화가 실행되지 않습니다(= 다크모드 FOUC).
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     // 다크모드 FOUC 방지 스크립트가 하이드레이션 전에 data-theme 속성을 설정해서, 서버가 그린
     // HTML(속성 없음)과 클라이언트 첫 렌더 사이에 항상 차이가 납니다. suppressHydrationWarning은
@@ -29,7 +33,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     // 잡아내므로, 알려진 이 경고만 정확히 없앱니다(React 공식 문서가 권장하는 패턴).
     <html lang="ko" data-scroll-behavior="smooth" className={`${pretendard.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body>{children}</body>
     </html>

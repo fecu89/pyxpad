@@ -6,6 +6,7 @@ import { AttachmentLimitError } from "@/lib/files/validation";
 import { apiError, assertSameOrigin } from "@/lib/http";
 import { getPrisma } from "@/lib/prisma";
 import { publishBoardEvent } from "@/lib/realtime/board-events";
+import { assertRateLimit } from "@/lib/security/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ pos
   try {
     assertSameOrigin(request);
     const user = await requireActiveUser();
+    // 이미지 한 장이 최대 4천만 픽셀까지 sharp로 변환되므로 업로드는 개별적으로도 제한합니다.
+    // 정상 사용(게시물당 최대 20개, 한 번에 3개씩 병렬)보다 넉넉하되 스크립트 남용은 막습니다.
+    assertRateLimit(request, {
+      scope: "attachment-upload",
+      userId: user.id,
+      windowMs: 5 * 60_000,
+      maxAttempts: 60,
+      message: "파일을 너무 많이 올렸습니다. 잠시 후 다시 시도해 주세요.",
+    });
     const { postId } = await params;
     const prisma = getPrisma();
     const post = await prisma.post.findFirst({

@@ -19,7 +19,7 @@ import type { PadPresentationSettings, PostFieldConfig } from "@/components/pad/
 import { requestJson } from "@/lib/api-client";
 import tabStyles from "@/components/pad/settings/pad-settings-tabs.module.css";
 
-type MemberDTO = { role: Exclude<PadRole, null>; user: { id: string; name: string | null; email: string | null; image: string | null } };
+type MemberDTO = { role: Exclude<PadRole, null>; user: { id: string; name: string | null; loginIdentifier: string | null; image: string | null } };
 
 export type ParticipationSettings = {
   allowMemberPosting: boolean;
@@ -188,7 +188,7 @@ export function PadSettingsTabs({
       <div id="settings-panel-basic" role="tabpanel" aria-labelledby="settings-tab-basic" className={tabStyles.tabPanel} hidden={activeTab !== "basic"}>
         <fieldset className={settingsStyles.group}>
           <legend>이름과 소개</legend>
-          <label className={settingsStyles.field}><span>패드 이름</span><input value={titleDraft} onChange={(event) => onTitleChange(event.target.value)} required maxLength={120} /></label>
+          <label className={settingsStyles.field}><span>패드 이름</span><input value={titleDraft} onChange={(event) => onTitleChange(event.target.value)} required maxLength={120} autoFocus /></label>
           <label className={settingsStyles.field}><span>소개</span><textarea value={descriptionDraft} onChange={(event) => onDescriptionChange(event.target.value)} rows={3} maxLength={500} /></label>
         </fieldset>
         <BoardBackgroundImageField boardId={board.id} value={appearanceDraft.backgroundImageUrl ?? null} onChange={onBackgroundImageChange} />
@@ -267,8 +267,8 @@ export function PadSettingsTabs({
           <div>
             {members.map((member) => (
               <article key={member.user.id}>
-                <Avatar name={member.user.name} email={member.user.email} image={member.user.image} />
-                <span>{member.user.name || "이름 없음"}<small>{member.user.email || "이메일 비공개"}</small></span>
+                <Avatar name={member.user.name} identifier={member.user.loginIdentifier} image={member.user.image} />
+                <span>{member.user.name || "이름 없음"}<small>{member.user.loginIdentifier || "로그인 정보 비공개"}</small></span>
                 <select value={member.role} disabled={member.role === "OWNER"} onChange={async (event) => { await onChangeMemberRole(member.user.id, event.target.value); await loadMembers(); }}>
                   <option value="OWNER">소유자</option>
                   <option value="ADMIN">패드 관리자</option>
@@ -285,9 +285,9 @@ export function PadSettingsTabs({
           <legend>멤버 추가</legend>
           <MemberInvitePicker boardId={board.id} onInvited={loadMembers} />
           {showEmailInvite ? (
-            <button type="button" className="button soft" onClick={async () => { await onInviteMember(); await loadMembers(); }}>이메일로 직접 추가</button>
+            <button type="button" className="button soft" onClick={async () => { await onInviteMember(); await loadMembers(); }}>아이디·카카오 이메일로 추가</button>
           ) : (
-            <button type="button" className="button ghost small" onClick={() => setShowEmailInvite(true)}>다른 학교 사람을 이메일로 추가할래요</button>
+            <button type="button" className="button ghost small" onClick={() => setShowEmailInvite(true)}>다른 학교 사람을 직접 추가할래요</button>
           )}
         </fieldset>
       </div>

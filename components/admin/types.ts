@@ -17,10 +17,14 @@ export type SystemPermission =
 export type AdminUserRecord = {
   id: string;
   name: string | null;
-  maskedEmail: string;
+  maskedLoginIdentifier: string;
+  loginType: "LOGIN_ID" | "KAKAO_EMAIL";
   role: UserRole;
   status: UserStatus;
   authVersion: number;
+  hasPasswordCredential: boolean;
+  mustChangePassword: boolean;
+  studentNumber: number | null;
   lastLoginAt: string | null;
   createdAt: string;
   ownedBoardCount: number;
@@ -34,9 +38,26 @@ export type AdminUserRecord = {
 export type SchoolDirectoryItem = {
   id: string;
   name: string;
+  code: string | null;
+  level: "ELEMENTARY" | "MIDDLE" | "HIGH";
+  district: string | null;
+  operatingStatus: "OPERATING" | "PLANNED" | "INACTIVE";
   userCount: number;
+  studentCount: number;
+  teacherCount: number;
+  unnumberedStudentCount: number;
+  unassignedStudentCount: number;
   isDefault: boolean;
-  groups: { id: string; name: string; type: "CLASS" | "DEPARTMENT"; userCount: number; isDefault: boolean }[];
+  teachers: { id: string; name: string | null; departmentName: string | null; isSchoolRepresentative: boolean }[];
+  groups: {
+    id: string;
+    name: string;
+    type: "CLASS" | "DEPARTMENT";
+    grade: number | null;
+    classNumber: number | null;
+    userCount: number;
+    isDefault: boolean;
+  }[];
 };
 
 export type AuditLogRecord = {
@@ -67,7 +88,7 @@ export type TeacherApprovalRecord = {
   reviewReason: string | null;
   requestedAt: string;
   reviewedAt: string | null;
-  user: { id: string; name: string | null; maskedEmail: string; image: string | null };
+  user: { id: string; name: string | null; maskedLoginIdentifier: string; loginType: "LOGIN_ID" | "KAKAO_EMAIL"; image: string | null };
   school: { id: string; name: string };
   schoolGroup: { id: string; name: string };
 };

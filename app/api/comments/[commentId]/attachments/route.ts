@@ -5,6 +5,7 @@ import { AttachmentLimitError } from "@/lib/files/validation";
 import { apiError, assertSameOrigin } from "@/lib/http";
 import { getPrisma } from "@/lib/prisma";
 import { publishBoardEvent } from "@/lib/realtime/board-events";
+import { assertRateLimit } from "@/lib/security/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -13,6 +14,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ com
   try {
     assertSameOrigin(request);
     const user = await requireActiveUser();
+    // 게시물 첨부와 같은 sharp 이미지 변환 경로를 쓰므로 같은 기준으로 제한합니다.
+    assertRateLimit(request, {
+      scope: "attachment-upload",
+      userId: user.id,
+      windowMs: 5 * 60_000,
+      maxAttempts: 60,
+      message: "파일을 너무 많이 올렸습니다. 잠시 후 다시 시도해 주세요.",
+    });
     const { commentId } = await params;
     const prisma = getPrisma();
     const comment = await prisma.comment.findFirst({

@@ -46,7 +46,7 @@ export async function requireAnySystemPermission(permissions: SystemPermission[]
 export function canAccessAdminShell(user: AuthorizationUser) {
   return user.role === "SUPER_ADMIN"
     || (user.role === "ADMIN" && user.systemPermissions.length > 0)
-    || (user.role === "TEACHER" && user.isSchoolRepresentative);
+    || (user.role === "TEACHER" && user.school !== null);
 }
 
 // 학교 대표교사(TEACHER + isSchoolRepresentative)가 특정 학교에 대한 배치·반/부서 관리 권한이
@@ -56,7 +56,10 @@ export function isSchoolRepresentativeFor(user: AuthorizationUser, schoolId: str
 }
 
 export function canCreateBoard(user: AuthorizationUser) {
-  return user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "TEACHER";
+  return user.role === "SUPER_ADMIN"
+    || user.role === "ADMIN"
+    || user.role === "TEACHER"
+    || user.role === "STUDENT";
 }
 
 export async function getEffectiveBoardAccess(boardId: string, user: AuthorizationUser | null) {
@@ -272,6 +275,6 @@ export function canAssignBoardRole(targetRole: UserRole, boardRole: "ADMIN" | "E
 export function requireRecentAuthentication(user: Pick<CurrentUser, "lastLoginAt">, minutes = 15) {
   const threshold = Date.now() - minutes * 60_000;
   if (!user.lastLoginAt || user.lastLoginAt.getTime() < threshold) {
-    throw new AuthorizationError("보안을 위해 카카오로 다시 로그인한 뒤 시도해 주세요.");
+    throw new AuthorizationError("보안을 위해 다시 로그인한 뒤 시도해 주세요.");
   }
 }

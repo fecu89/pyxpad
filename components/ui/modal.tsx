@@ -6,18 +6,20 @@ import { cn } from "@/lib/cn";
 
 const focusableSelector = "button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex='-1'])";
 
-export function Modal({ open, onClose, title, description, children, className, variant = "center" }: {
+export function Modal({ open, onClose, title, description, children, className, variant = "center", headerAction }: {
   open: boolean;
   onClose: () => void;
   title: string;
   description?: string;
   children: ReactNode;
   className?: string;
+  headerAction?: ReactNode;
   // "side"는 오른쪽에서 슬라이드로 열리는 패널입니다. 설정처럼 뒤에 있는 보드가 어떻게
   // 바뀌는지 보면서 조정해야 하는 화면에 씁니다(가운데 모달은 게시물을 다 가려서 요청받음).
-  variant?: "center" | "side";
+  variant?: "center" | "side" | "composer";
 }) {
   const panelRef = useRef<HTMLElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   // onClose는 호출부에서 인라인 함수나 매번 새로 만들어지는 콜백으로 넘어오는 경우가 많아
   // (예: post-composer.tsx의 closeComposer는 매번 새 객체인 큐 상태에 의존) 참조가 렌더마다
@@ -62,13 +64,51 @@ export function Modal({ open, onClose, title, description, children, className, 
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open || variant !== "composer") return;
+    const backdrop = backdropRef.current;
+    if (!backdrop) return;
+    const viewport = window.visualViewport;
+    const syncViewport = () => {
+      const height = viewport?.height ?? window.innerHeight;
+      const offsetTop = viewport?.offsetTop ?? 0;
+      backdrop.style.top = `${offsetTop}px`;
+      backdrop.style.height = `${height}px`;
+      backdrop.style.bottom = "auto";
+      backdrop.dataset.keyboard = String(Boolean(viewport && height < window.innerHeight - 120));
+    };
+    syncViewport();
+    viewport?.addEventListener("resize", syncViewport);
+    viewport?.addEventListener("scroll", syncViewport);
+    window.addEventListener("resize", syncViewport);
+    return () => {
+      viewport?.removeEventListener("resize", syncViewport);
+      viewport?.removeEventListener("scroll", syncViewport);
+      window.removeEventListener("resize", syncViewport);
+      backdrop.style.removeProperty("top");
+      backdrop.style.removeProperty("height");
+      backdrop.style.removeProperty("bottom");
+      delete backdrop.dataset.keyboard;
+    };
+  }, [open, variant]);
+
   if (!open) return null;
+  const sidePanel = variant === "side" || variant === "composer";
   return (
-    <div className={cn("modal-backdrop", variant === "side" && "modal-side")} role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}>
-      <section ref={panelRef} tabIndex={-1} className={cn("modal-panel", variant === "side" && "modal-panel-side", className)} role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby={description ? "modal-description" : undefined}>
-        <header className="modal-header">
-          <div><h2 id="modal-title">{title}</h2>{description && <p id="modal-description">{description}</p>}</div>
-          <button type="button" className="icon-button" onClick={onClose} aria-label="닫기"><X size={18} /></button>
+    <div ref={backdropRef} className={cn("modal-backdrop", sidePanel && "modal-side", variant === "composer" && "modal-composer-backdrop")} role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}>
+      <section ref={panelRef} tabIndex={-1} className={cn("modal-panel", sidePanel && "modal-panel-side", variant === "composer" && "modal-panel-composer", className)} role="dialog" aria-modal="true" aria-label={headerAction ? title : undefined} aria-labelledby={headerAction ? undefined : "modal-title"} aria-describedby={!headerAction && description ? "modal-description" : undefined}>
+        <header className={cn("modal-header", headerAction && "modal-header-actions-only")}>
+          {headerAction ? (
+            <>
+              <button type="button" className="icon-button" onClick={onClose} aria-label="창 닫기"><X size={19} /></button>
+              {headerAction}
+            </>
+          ) : (
+            <>
+              <div><h2 id="modal-title">{title}</h2>{description && <p id="modal-description">{description}</p>}</div>
+              <button type="button" className="icon-button" onClick={onClose} aria-label="닫기"><X size={18} /></button>
+            </>
+          )}
         </header>
         {children}
       </section>

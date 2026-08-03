@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { LoaderCircle, MoreHorizontal } from "lucide-react";
+import { StudentNumberEditor } from "@/components/admin/student-number-editor";
 import type { AdminActor, AdminUserRecord, SchoolDirectoryItem, UserRole, UserStatus } from "@/components/admin/types";
 
 const roleLabels: Record<UserRole, string> = {
@@ -16,6 +17,7 @@ type UserInlineRowProps = {
   user: AdminUserRecord;
   schools: SchoolDirectoryItem[];
   selected: boolean;
+  selectionDisabled: boolean;
   onToggleSelected: () => void;
   onUpdated: (user: AdminUserRecord) => void;
   onOpenActions: () => void;
@@ -56,6 +58,7 @@ export function UserInlineRow({
   user,
   schools,
   selected,
+  selectionDisabled,
   onToggleSelected,
   onUpdated,
   onOpenActions,
@@ -84,6 +87,11 @@ export function UserInlineRow({
     || (targetIsNonAdmin && actorPermissions.has("CHANGE_NON_ADMIN_ROLES"))
   );
   const canChangeGroup = canChangeSchool || (!isSelf && canManageAsRepresentative);
+  const canChangeStudentNumber = user.role === "STUDENT" && (
+    actor.role === "SUPER_ADMIN"
+    || (actor.role === "ADMIN" && actorPermissions.has("VIEW_USERS"))
+    || (actor.role === "TEACHER" && actor.school?.id === user.school?.id)
+  );
   const canRevokeSessions = actor.role === "SUPER_ADMIN"
     || (targetIsNonAdmin && actorPermissions.has("REVOKE_USER_SESSIONS"));
   const canViewPii = actor.role === "SUPER_ADMIN" || actorPermissions.has("VIEW_USER_PII");
@@ -180,12 +188,12 @@ export function UserInlineRow({
   return (
     <tr className={selected ? "selected" : undefined}>
       <td className="admin-checkbox-col">
-        <input type="checkbox" checked={selected} onChange={onToggleSelected} disabled={isSelf} aria-label={`${user.name || "이름 없음"} 선택`} />
+        <input type="checkbox" checked={selected} onChange={onToggleSelected} disabled={isSelf || selectionDisabled} aria-label={`${user.name || "이름 없음"} 선택`} />
       </td>
       <td>
         <div className="admin-user-identity">
           <span className={`admin-avatar small ${user.status !== "ACTIVE" ? "suspended" : ""}`}>{(user.name || "?")[0]}</span>
-          <span><b>{user.name || "이름 없음"}</b><small>{user.maskedEmail}</small>{notice && <em data-error={notice !== "저장됨"}>{notice}</em>}</span>
+          <span><b>{user.name || "이름 없음"}</b><small>{user.maskedLoginIdentifier}</small>{user.mustChangePassword ? <em className="password-pending">비밀번호 변경 대기</em> : null}{notice && <em data-error={notice !== "저장됨"}>{notice}</em>}</span>
         </div>
       </td>
       <td>
@@ -206,6 +214,15 @@ export function UserInlineRow({
           {canChangeGroup
             ? <select className="admin-inline-select" value={draft.schoolGroupId} onChange={(event) => changeSchoolGroup(event.target.value)} disabled={pending || !expectedGroupType || !draft.schoolId} aria-label={`${user.name || "사용자"} ${expectedGroupType === "CLASS" ? "반" : "부서"}`}><option value="">{expectedGroupType ? "소속 선택" : "해당 없음"}</option>{availableGroups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}</select>
             : <small>{user.schoolGroup?.name ?? "소속 없음"}</small>}
+          {user.role === "STUDENT" ? canChangeStudentNumber ? (
+            <StudentNumberEditor
+              userId={user.id}
+              userName={user.name || "학생"}
+              initialValue={user.studentNumber}
+              source="사용자 관리"
+              onSaved={onUpdated}
+            />
+          ) : <small className="admin-student-number">{user.studentNumber ? `${user.studentNumber}번` : "번호 미지정"}</small> : null}
         </div>
       </td>
       <td className="admin-board-count"><b>{user.ownedBoardCount + user.memberBoardCount}</b><small>소유 {user.ownedBoardCount}</small></td>

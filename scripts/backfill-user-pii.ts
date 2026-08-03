@@ -5,7 +5,7 @@ config({ quiet: true });
 
 import { getPrisma } from "../lib/prisma";
 import {
-  createEmailLookup,
+  createLoginIdentifierLookup,
   decryptOptionalUserPii,
   decryptUserPii,
   encryptOptionalUserPii,
@@ -18,8 +18,8 @@ type LegacyUser = {
   email: string | null;
   name: string | null;
   image: string | null;
-  emailEncrypted: string | null;
-  emailLookup: string | null;
+  loginIdentifierEncrypted: string | null;
+  loginIdentifierLookup: string | null;
   nameEncrypted: string | null;
   imageEncrypted: string | null;
 };
@@ -35,7 +35,7 @@ async function main() {
   `;
   if (!column[0]?.exists) {
     const remaining = await prisma.$queryRaw<{ count: bigint }[]>`
-      SELECT COUNT(*)::bigint AS count FROM "User" WHERE "emailEncrypted" IS NULL OR "emailLookup" IS NULL
+      SELECT COUNT(*)::bigint AS count FROM "User" WHERE "loginIdentifierEncrypted" IS NULL OR "loginIdentifierLookup" IS NULL
     `;
     if (Number(remaining[0]?.count ?? 0)) throw new Error("암호화되지 않은 사용자 레코드가 남아 있습니다.");
     console.log("status=already_backfilled_and_plaintext_removed");
@@ -43,7 +43,7 @@ async function main() {
   }
 
   const users = await prisma.$queryRaw<LegacyUser[]>`
-    SELECT id, email, name, image, "emailEncrypted", "emailLookup", "nameEncrypted", "imageEncrypted"
+    SELECT id, email, name, image, "loginIdentifierEncrypted", "loginIdentifierLookup", "nameEncrypted", "imageEncrypted"
     FROM "User"
     ORDER BY id
   `;
@@ -52,27 +52,27 @@ async function main() {
   );
   const bootstrapEmail = process.env.BOOTSTRAP_SUPER_ADMIN_EMAIL;
   if (!bootstrapEmail) throw new Error("BOOTSTRAP_SUPER_ADMIN_EMAIL 환경 변수가 필요합니다.");
-  const bootstrapLookup = createEmailLookup(bootstrapEmail);
+  const bootstrapLookup = createLoginIdentifierLookup(bootstrapEmail);
   let bootstrapMatches = 0;
   let verified = 0;
 
   for (const user of users) {
     if (!user.email) throw new Error("평문 이메일이 없는 미완료 사용자 레코드가 있습니다.");
     const email = normalizeEmail(user.email);
-    const emailLookup = createEmailLookup(email);
-    const isBootstrap = emailLookup === bootstrapLookup;
+    const loginIdentifierLookup = createLoginIdentifierLookup(email);
+    const isBootstrap = loginIdentifierLookup === bootstrapLookup;
     if (isBootstrap) bootstrapMatches += 1;
     const role = isBootstrap ? "SUPER_ADMIN" : boardOwners.has(user.id) ? "TEACHER" : "STUDENT";
     const encrypted = {
-      emailEncrypted: encryptUserPii(user.id, "email", email),
-      emailLookup,
+      loginIdentifierEncrypted: encryptUserPii(user.id, "email", email),
+      loginIdentifierLookup,
       nameEncrypted: encryptOptionalUserPii(user.id, "name", user.name),
       imageEncrypted: encryptOptionalUserPii(user.id, "image", user.image),
       role,
     } as const;
 
     if (!dryRun) await prisma.user.update({ where: { id: user.id }, data: encrypted });
-    if (decryptUserPii(user.id, "email", encrypted.emailEncrypted) !== email) {
+    if (decryptUserPii(user.id, "email", encrypted.loginIdentifierEncrypted) !== email) {
       throw new Error("이메일 암호화 검증에 실패했습니다.");
     }
     if (decryptOptionalUserPii(user.id, "name", encrypted.nameEncrypted) !== user.name) {
@@ -87,7 +87,7 @@ async function main() {
   if (bootstrapMatches !== 1) throw new Error("초기 전체관리자 이메일과 일치하는 사용자가 정확히 한 명이어야 합니다.");
   if (!dryRun) {
     const missing = await prisma.$queryRaw<{ count: bigint }[]>`
-      SELECT COUNT(*)::bigint AS count FROM "User" WHERE "emailEncrypted" IS NULL OR "emailLookup" IS NULL
+      SELECT COUNT(*)::bigint AS count FROM "User" WHERE "loginIdentifierEncrypted" IS NULL OR "loginIdentifierLookup" IS NULL
     `;
     if (Number(missing[0]?.count ?? 0)) throw new Error("암호화 백필이 완료되지 않은 사용자가 있습니다.");
   }

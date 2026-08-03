@@ -300,6 +300,28 @@
   white-space: nowrap;
 }
 
+.nicknameRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+}
+
+.nicknameRow :global(.button) {
+  min-height: 45px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.field small span[data-status="available"] {
+  color: var(--green-dark);
+  font-weight: 700;
+}
+
+.field small span[data-status="taken"] {
+  color: var(--danger);
+  font-weight: 700;
+}
+
 .field,
 .readonlyField {
   display: grid;
@@ -357,6 +379,23 @@
 }
 
 .field > .warning {
+  color: var(--danger);
+}
+
+.studentOrganization {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.organizationHint {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.organizationHint[data-warning] {
   color: var(--danger);
 }
 
@@ -744,6 +783,14 @@
     grid-template-columns: 1fr;
   }
 
+  .studentOrganization {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .studentOrganization > :first-child {
+    grid-column: 1 / -1;
+  }
+
   .actions {
     position: sticky;
     bottom: 0;
@@ -759,6 +806,18 @@
 }
 
 @media (max-width: 390px) {
+  .studentOrganization {
+    grid-template-columns: 1fr;
+  }
+
+  .studentOrganization > :first-child {
+    grid-column: auto;
+  }
+
+  .nicknameRow {
+    grid-template-columns: 1fr;
+  }
+
   .brand b {
     display: none;
   }

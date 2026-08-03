@@ -3,10 +3,13 @@
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { PostBody } from "@/components/pad/post-body";
 import type { BoardExportPost } from "@/lib/exports/data";
 import styles from "@/components/pad/export/pad-presentation.module.css";
+
+// 발표 화면도 마크다운 렌더러 청크를 슬라이드 전환 코드와 분리합니다(서버 렌더링은 유지).
+const PostBody = dynamic(() => import("@/components/pad/post-body").then((mod) => mod.PostBody));
 
 // 슬라이드 한 장 = 게시물 한 개. 좌우 화살표 키와 버튼으로 넘기며, 새로고침해도 처음부터
 // 시작합니다(padupgrade.md 8.3 "게시물별 슬라이드 발표 모드" — 진행 상태 저장은 범위에 없음).

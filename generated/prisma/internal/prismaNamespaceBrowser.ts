@@ -52,7 +52,10 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  AuthRateLimit: 'AuthRateLimit',
+  AuthSecurityEvent: 'AuthSecurityEvent',
   School: 'School',
+  SchoolGrade: 'SchoolGrade',
   SchoolGroup: 'SchoolGroup',
   TeacherApprovalRequest: 'TeacherApprovalRequest',
   BoardActivity: 'BoardActivity',
@@ -94,15 +97,19 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 
 export const UserScalarFieldEnum = {
   id: 'id',
-  emailEncrypted: 'emailEncrypted',
-  emailLookup: 'emailLookup',
+  loginIdentifierEncrypted: 'loginIdentifierEncrypted',
+  loginIdentifierLookup: 'loginIdentifierLookup',
+  passwordHash: 'passwordHash',
+  mustChangePassword: 'mustChangePassword',
   nameEncrypted: 'nameEncrypted',
+  nameLookup: 'nameLookup',
   imageEncrypted: 'imageEncrypted',
   role: 'role',
   status: 'status',
   authVersion: 'authVersion',
   schoolId: 'schoolId',
   schoolGroupId: 'schoolGroupId',
+  studentNumber: 'studentNumber',
   isSchoolRepresentative: 'isSchoolRepresentative',
   onboardingCompletedAt: 'onboardingCompletedAt',
   lastLoginAt: 'lastLoginAt',
@@ -113,9 +120,41 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+export const AuthRateLimitScalarFieldEnum = {
+  key: 'key',
+  category: 'category',
+  count: 'count',
+  windowStartedAt: 'windowStartedAt',
+  blockedUntil: 'blockedUntil',
+  expiresAt: 'expiresAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AuthRateLimitScalarFieldEnum = (typeof AuthRateLimitScalarFieldEnum)[keyof typeof AuthRateLimitScalarFieldEnum]
+
+
+export const AuthSecurityEventScalarFieldEnum = {
+  key: 'key',
+  type: 'type',
+  accountLookup: 'accountLookup',
+  ipLookup: 'ipLookup',
+  userId: 'userId',
+  count: 'count',
+  firstSeenAt: 'firstSeenAt',
+  lastSeenAt: 'lastSeenAt',
+  expiresAt: 'expiresAt'
+} as const
+
+export type AuthSecurityEventScalarFieldEnum = (typeof AuthSecurityEventScalarFieldEnum)[keyof typeof AuthSecurityEventScalarFieldEnum]
+
+
 export const SchoolScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  code: 'code',
+  level: 'level',
+  district: 'district',
+  operatingStatus: 'operatingStatus',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -123,11 +162,24 @@ export const SchoolScalarFieldEnum = {
 export type SchoolScalarFieldEnum = (typeof SchoolScalarFieldEnum)[keyof typeof SchoolScalarFieldEnum]
 
 
+export const SchoolGradeScalarFieldEnum = {
+  id: 'id',
+  schoolId: 'schoolId',
+  grade: 'grade',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SchoolGradeScalarFieldEnum = (typeof SchoolGradeScalarFieldEnum)[keyof typeof SchoolGradeScalarFieldEnum]
+
+
 export const SchoolGroupScalarFieldEnum = {
   id: 'id',
   schoolId: 'schoolId',
   name: 'name',
   type: 'type',
+  gradeId: 'gradeId',
+  classNumber: 'classNumber',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

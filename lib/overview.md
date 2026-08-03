@@ -7,7 +7,7 @@
 - `files/`: 업로드 검증, 파일명, 경로, 이미지 변환과 정리
 - `security/`: 개인정보 암호화와 검색용 HMAC
 - `users/`: 암호화 사용자 레코드를 목적별 최소 DTO로 변환
-- `http.ts`: 모든 Route Handler가 공유하는 `apiError()`(에러 응답 통일)와 `assertSameOrigin()`(CSRF 방지 same-origin 검사)
+- `http.ts`: 모든 Route Handler가 공유하는 `apiError()`(에러 응답 통일)와 `assertSameOrigin()`(CSRF 방지 same-origin 검사). 자체 호스팅은 환경별 `APP_ORIGINS`의 전체 origin을 비교하고, 이 값이 없는 Vercel 배포에서만 플랫폼이 덮어쓰는 `X-Forwarded-Host`를 신뢰합니다.
 
 ## `apiError()` 내부 에러 메시지 노출 방지 (2026-07-29 보안 점검)
 

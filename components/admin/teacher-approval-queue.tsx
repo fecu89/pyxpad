@@ -118,7 +118,7 @@ export function TeacherApprovalQueue({
               <li key={request.id}>
                 <div className="admin-approval-person">
                   <Avatar name={request.user.name} image={request.user.image} />
-                  <span><b>{request.user.name || "이름 없음"}</b><small>{request.user.maskedEmail}</small></span>
+                  <span><b>{request.user.name || "이름 없음"}</b><small>{request.user.maskedLoginIdentifier}</small></span>
                 </div>
                 <div className="admin-approval-placement">
                   <span><School size={14} aria-hidden /><small>학교</small><b>{request.school.name}</b></span>

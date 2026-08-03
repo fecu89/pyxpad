@@ -13,7 +13,7 @@ import { CreateBoardActionsProvider, CreateBoardButton } from "@/components/home
 import type { DashboardFolder } from "@/lib/dashboard/types";
 
 // app/(dashboard)/layout.tsx가 로그인 사용자에게만 그리는 상주 셸입니다. 라우트가 바뀌어도
-// (/, /favorites, /search, /profile, /folders/[id]) 이 컴포넌트는 다시 마운트되지 않으므로
+// (/dashboard, /favorites, /search, /profile, /folders/[id]) 이 컴포넌트는 다시 마운트되지 않으므로
 // 사이드바·알림벨 SSE가 페이지 전환 중에도 끊기지 않습니다. 모바일에서만 보이는 브랜드는
 // .home-nav .brand에 있고(≥960px에서는 사이드바 브랜드와 겹쳐 CSS로 숨김), 데스크탑 사이드바는
 // AppShell이 그립니다.
@@ -34,7 +34,7 @@ export function DashboardChrome({
   let content = (
     <AppShell recentBoards={recentBoards} folders={folders} user={user} canAccessAdmin={canAccessAdmin}>
       <header className="home-nav">
-        <Brand />
+        <Brand href="/dashboard" />
         <div className="nav-actions">
           <NotificationBell />
           {canCreate && <CreateBoardButton className="button primary"><Plus size={17} />새 패드</CreateBoardButton>}

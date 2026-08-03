@@ -6,7 +6,7 @@ import { getBoardAccess } from "../lib/board/permissions";
 import { normalizeBoardAccessSettings } from "../lib/board/validators";
 import { getPrivateUserDTO } from "../lib/users/repository";
 import { hashBoardPassword } from "../lib/board/board-password";
-import { createEmailLookup, encryptUserPii } from "../lib/security/pii-crypto-core";
+import { createLoginIdentifierLookup, encryptUserPii } from "../lib/security/pii-crypto-core";
 import {
   canComment,
   canCreatePost,
@@ -42,10 +42,10 @@ type Combo = {
 async function createTempUser(prisma: ReturnType<typeof getPrisma>, label: string) {
   const email = `verify-access-${label}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@pyxpad.demo`;
   const created = await prisma.user.create({
-    data: { emailEncrypted: "", emailLookup: createEmailLookup(email), role: "STUDENT", status: "ACTIVE" },
+    data: { loginIdentifierEncrypted: "", loginIdentifierLookup: createLoginIdentifierLookup(email), role: "STUDENT", status: "ACTIVE" },
     select: { id: true },
   });
-  await prisma.user.update({ where: { id: created.id }, data: { emailEncrypted: encryptUserPii(created.id, "email", email) } });
+  await prisma.user.update({ where: { id: created.id }, data: { loginIdentifierEncrypted: encryptUserPii(created.id, "email", email) } });
   return created.id;
 }
 

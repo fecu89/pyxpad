@@ -87,7 +87,7 @@ export type PadData = {
   // memberCount를 쓰고, 멤버 관리(역할 변경·제거)에는 GET /api/boards/[boardId]/members로
   // 따로 전체 목록을 불러옵니다(lib/board/queries.ts, pad-settings-tabs.tsx 참고).
   memberCount: number;
-  members: { role: Exclude<PadRole, null>; user: { id: string; name: string | null; email: string | null; image: string | null } }[];
+  members: { role: Exclude<PadRole, null>; user: { id: string; name: string | null; loginIdentifier: string | null; image: string | null } }[];
   sections: SectionData[];
 };
 

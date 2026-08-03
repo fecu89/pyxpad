@@ -21,3 +21,9 @@
 - `20260729000000_add_school_audit_actions`: 학교·반/부서 CRUD 감사 액션 6종
 - `20260730000000_add_user_onboarding`: 신규 카카오 계정의 가입 정보 완료 시각. 기존 사용자는 마이그레이션에서 완료 상태로 백필
 - `20260730010000_add_teacher_approval_requests`: 학교별 교사 가입 신청·승인·반려 상태와 감사·알림 유형
+- `20260801000000_add_user_password_credentials`: 카카오 계정과 함께 쓸 수 있는 일반 이메일 로그인용 nullable scrypt 해시
+- `20260801010000_add_auth_security_nickname_uniqueness`: 닉네임 HMAC 고유 키, DB 공유형 인증 제한과 HMAC 인증 이벤트 집계
+- `20260801020000_add_student_roster_password_reset_grade_hierarchy`: 학교 → 학년 → 반 계층, 학생 번호, 최초 비밀번호 변경 상태, 학생 명단 발급·관리자 비밀번호 초기화 감사 액션. 기존 `N학년 M반` 이름은 자동 백필
+- `20260802000000_add_student_number_uniqueness`: 같은 학급의 출석번호 중복을 막는 `(schoolGroupId, studentNumber)` 복합 고유 인덱스. 번호 미지정 `NULL`은 여러 명 허용
+- `20260802010000_add_academic_management`: 학교 코드·급별·지역·학년도·운영 상태, 학급 별칭·정원·담임, 학생 학적 상태와 학적 변경·반 이동·진급 감사 액션. 기존 삭제되지 않은 학생은 `ENROLLED`로 백필
+- `20260802020000_remove_unneeded_academic_features`: 실제 운영 범위에 필요하지 않은 학생 학적 상태 enum/컬럼, 학급 별칭·정원·담임 관계, 학교 학년도 컬럼 제거. 과거 감사 로그 해석을 위해 기존 감사 action enum 값은 유지

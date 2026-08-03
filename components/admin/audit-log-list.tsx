@@ -27,8 +27,13 @@ const actionLabels: Record<string, string> = {
   SCHOOL_GROUP_DELETED: "반·부서 삭제",
   SCHOOL_REPRESENTATIVE_GRANTED: "학교 대표교사 지정",
   SCHOOL_REPRESENTATIVE_REVOKED: "학교 대표교사 해제",
+  STUDENT_ACADEMIC_STATUS_CHANGED: "학생 학적 상태 변경",
+  STUDENTS_CLASS_MOVED: "학생 반 이동",
+  ACADEMIC_YEAR_PROMOTED: "학년도 진급 처리",
   TEACHER_APPROVAL_APPROVED: "교사 가입 승인",
   TEACHER_APPROVAL_REJECTED: "교사 가입 반려",
+  STUDENT_ROSTER_IMPORTED: "학생 명단 일괄 등록",
+  USER_PASSWORD_RESET: "비밀번호 초기화",
 };
 
 type AuditLogListProps = {

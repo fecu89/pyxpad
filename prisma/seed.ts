@@ -3,9 +3,10 @@ import { config } from "dotenv";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, type UserRole } from "../generated/prisma/client";
 import {
-  createEmailLookup,
+  createLoginIdentifierLookup,
+  createNicknameLookup,
   encryptOptionalUserPii,
-  encryptUserPii,
+  encryptUserLoginIdentifier,
   normalizeEmail,
 } from "../lib/security/pii-crypto-core";
 
@@ -19,14 +20,15 @@ const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) })
 
 async function ensureSeedUser(emailValue: string, name: string, desiredRole: UserRole) {
   const email = normalizeEmail(emailValue);
-  const emailLookup = createEmailLookup(email);
-  const existing = await prisma.user.findUnique({ where: { emailLookup }, select: { id: true, role: true } });
+  const loginIdentifierLookup = createLoginIdentifierLookup(email);
+  const existing = await prisma.user.findUnique({ where: { loginIdentifierLookup }, select: { id: true, role: true } });
   if (existing) {
     return prisma.user.update({
       where: { id: existing.id },
       data: {
-        emailEncrypted: encryptUserPii(existing.id, "email", email),
+        loginIdentifierEncrypted: encryptUserLoginIdentifier(existing.id, email),
         nameEncrypted: encryptOptionalUserPii(existing.id, "name", name),
+        nameLookup: createNicknameLookup(name),
         role: existing.role === "SUPER_ADMIN" ? "SUPER_ADMIN" : desiredRole,
         schoolId: "school_cheonghak_high",
         schoolGroupId: desiredRole === "STUDENT" ? "group_cheonghak_grade3_class5" : "group_cheonghak_grade3_department",
@@ -38,9 +40,10 @@ async function ensureSeedUser(emailValue: string, name: string, desiredRole: Use
   return prisma.user.create({
     data: {
       id,
-      emailLookup,
-      emailEncrypted: encryptUserPii(id, "email", email),
+      loginIdentifierLookup,
+      loginIdentifierEncrypted: encryptUserLoginIdentifier(id, email),
       nameEncrypted: encryptOptionalUserPii(id, "name", name),
+      nameLookup: createNicknameLookup(name),
       role: desiredRole,
       schoolId: "school_cheonghak_high",
       schoolGroupId: desiredRole === "STUDENT" ? "group_cheonghak_grade3_class5" : "group_cheonghak_grade3_department",
@@ -56,14 +59,25 @@ async function main() {
     create: {
       id: "school_cheonghak_high",
       name: "청학고등학교",
-      groups: {
-        create: [
-          { id: "group_cheonghak_grade3_class5", name: "3학년 5반", type: "CLASS" },
-          { id: "group_cheonghak_grade3_department", name: "3학년부", type: "DEPARTMENT" },
-        ],
-      },
     },
   });
+  const grade3 = await prisma.schoolGrade.upsert({
+    where: { schoolId_grade: { schoolId: "school_cheonghak_high", grade: 3 } },
+    update: {},
+    create: { schoolId: "school_cheonghak_high", grade: 3 },
+  });
+  await Promise.all([
+    prisma.schoolGroup.upsert({
+      where: { id: "group_cheonghak_grade3_class5" },
+      update: { name: "3학년 5반", type: "CLASS", gradeId: grade3.id, classNumber: 5 },
+      create: { id: "group_cheonghak_grade3_class5", schoolId: "school_cheonghak_high", name: "3학년 5반", type: "CLASS", gradeId: grade3.id, classNumber: 5 },
+    }),
+    prisma.schoolGroup.upsert({
+      where: { id: "group_cheonghak_grade3_department" },
+      update: { name: "3학년부", type: "DEPARTMENT", gradeId: null, classNumber: null },
+      create: { id: "group_cheonghak_grade3_department", schoolId: "school_cheonghak_high", name: "3학년부", type: "DEPARTMENT" },
+    }),
+  ]);
   const teacher = await ensureSeedUser("teacher@pyxpad.demo", "김하늘 선생님", "TEACHER");
   const student = await ensureSeedUser("student@pyxpad.demo", "이로운", "STUDENT");
 

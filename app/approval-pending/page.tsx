@@ -4,6 +4,7 @@ import { ApprovalPendingExperience } from "@/components/onboarding/approval-pend
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { safeInternalCallbackUrl } from "@/lib/auth/page-guard";
 import { getTeacherApprovalForUser } from "@/lib/users/teacher-approvals";
+import { DASHBOARD_PATH } from "@/lib/routes";
 
 export const dynamic = "force-dynamic";
 
@@ -24,10 +25,10 @@ export default async function ApprovalPendingPage({
     getTeacherApprovalForUser(user.id),
     searchParams,
   ]);
-  const candidateNextPath = safeInternalCallbackUrl(params.next);
+  const candidateNextPath = safeInternalCallbackUrl(params.next, DASHBOARD_PATH);
   const nextPath = candidateNextPath.startsWith("/onboarding")
     || candidateNextPath.startsWith("/approval-pending")
-    ? "/"
+    ? DASHBOARD_PATH
     : candidateNextPath;
 
   if (user.onboardingCompletedAt) redirect(nextPath);
@@ -38,7 +39,7 @@ export default async function ApprovalPendingPage({
   return (
     <ApprovalPendingExperience
       name={user.name}
-      email={user.email}
+      loginIdentifier={user.loginIdentifier}
       image={user.image}
       schoolName={request.school.name}
       departmentName={request.schoolGroup.name}

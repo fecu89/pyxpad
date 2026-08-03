@@ -7,6 +7,7 @@ import { Prisma, type BoardMemberRole } from "@/generated/prisma/client";
 import type { CurrentUser } from "@/lib/auth/current-user";
 import { canAssignBoardRole, canCreateBoard, canDownloadAttachment, canManageBoardSettings, canReadEffectiveBoard } from "@/lib/auth/authorization";
 import { hasVerifiedBoardPassword } from "@/lib/board/board-password";
+import { assertCanOwnAnotherBoard, BoardOwnershipLimitError } from "@/lib/board/ownership-limit";
 import { getBoardAccess } from "@/lib/board/permissions";
 import type { CloneBoardOptions } from "@/lib/board-reuse/validators";
 import { removeStoredAttachmentFiles, type StoredAttachmentFiles } from "@/lib/files/cleanup";
@@ -175,7 +176,7 @@ async function mapWithConcurrency<T, R>(items: T[], concurrency: number, mapper:
 }
 
 export async function cloneBoard(sourceBoardId: string, user: CurrentUser, options: CloneBoardOptions) {
-  if (!canCreateBoard(user)) throw new BoardReuseError("교사 이상만 패드를 복제할 수 있습니다.", 403);
+  if (!canCreateBoard(user)) throw new BoardReuseError("패드를 복제할 권한이 없습니다.", 403);
   const access = await getBoardAccess(sourceBoardId, user.id);
   if (!access) throw new BoardReuseError("복제할 패드를 찾을 수 없습니다.", 404);
   if (!canReadEffectiveBoard(user, access)) throw new BoardReuseError("이 패드를 복제할 권한이 없습니다.", 403);
@@ -349,6 +350,12 @@ export async function cloneBoard(sourceBoardId: string, user: CurrentUser, optio
     ];
 
     await prisma.$transaction(async (tx) => {
+      try {
+        await assertCanOwnAnotherBoard(tx, user);
+      } catch (error) {
+        if (error instanceof BoardOwnershipLimitError) throw new BoardReuseError(error.message, error.status);
+        throw error;
+      }
       await tx.board.create({ data: boardData });
       if (sectionInputs.length) await tx.section.createMany({ data: sectionInputs });
       if (postInputs.length) await tx.post.createMany({ data: postInputs });

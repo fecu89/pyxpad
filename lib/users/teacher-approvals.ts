@@ -1,7 +1,7 @@
 import "server-only";
 
 import { getPrisma } from "@/lib/prisma";
-import { decryptOptionalUserPii, decryptUserPii, maskEmail } from "@/lib/security/pii-crypto";
+import { decryptOptionalUserPii, decryptUserLoginIdentifier, maskLoginIdentifier } from "@/lib/security/pii-crypto";
 
 export type TeacherApprovalRecord = {
   id: string;
@@ -9,7 +9,7 @@ export type TeacherApprovalRecord = {
   reviewReason: string | null;
   requestedAt: string;
   reviewedAt: string | null;
-  user: { id: string; name: string | null; maskedEmail: string; image: string | null };
+  user: { id: string; name: string | null; maskedLoginIdentifier: string; loginType: "LOGIN_ID" | "KAKAO_EMAIL"; image: string | null };
   school: { id: string; name: string };
   schoolGroup: { id: string; name: string };
 };
@@ -61,9 +61,10 @@ export async function getTeacherApprovalQueue(input: {
         user: {
           select: {
             id: true,
-            emailEncrypted: true,
+            loginIdentifierEncrypted: true,
             nameEncrypted: true,
             imageEncrypted: true,
+            passwordHash: true,
           },
         },
         school: { select: { id: true, name: true } },
@@ -74,7 +75,8 @@ export async function getTeacherApprovalQueue(input: {
 
   return {
     requests: requests.map((request): TeacherApprovalRecord => {
-      const email = decryptUserPii(request.user.id, "email", request.user.emailEncrypted);
+      const loginIdentifier = decryptUserLoginIdentifier(request.user.id, request.user.loginIdentifierEncrypted);
+      const loginType = request.user.passwordHash ? "LOGIN_ID" as const : "KAKAO_EMAIL" as const;
       return {
         id: request.id,
         status: request.status,
@@ -84,7 +86,8 @@ export async function getTeacherApprovalQueue(input: {
         user: {
           id: request.user.id,
           name: decryptOptionalUserPii(request.user.id, "name", request.user.nameEncrypted),
-          maskedEmail: maskEmail(email),
+          maskedLoginIdentifier: maskLoginIdentifier(loginIdentifier),
+          loginType,
           image: decryptOptionalUserPii(request.user.id, "image", request.user.imageEncrypted),
         },
         school: request.school,

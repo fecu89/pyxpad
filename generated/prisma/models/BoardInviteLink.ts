@@ -567,14 +567,6 @@ export type EnumBoardMemberRoleFieldUpdateOperationsInput = {
   set?: $Enums.BoardMemberRole
 }
 
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type BoardInviteLinkCreateWithoutCreatedByInput = {
   id?: string
   tokenHash: string

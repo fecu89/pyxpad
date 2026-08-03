@@ -5,8 +5,8 @@ import { canArchiveBoard, canComment, canCreatePost, canDownloadAttachment, canM
 import { hasVerifiedBoardPassword } from "@/lib/board/board-password";
 import { getPrisma } from "@/lib/prisma";
 import { getBoardAccessBySlug } from "@/lib/board/permissions";
-import { decryptUserEmail, toPublicAuthorDTO } from "@/lib/users/repository";
-import { maskEmail } from "@/lib/security/pii-crypto";
+import { decryptUserLoginIdentifier, toPublicAuthorDTO } from "@/lib/users/repository";
+import { maskLoginIdentifier } from "@/lib/security/pii-crypto";
 import { defaultPostFieldConfig } from "@/lib/post-fields/defaults";
 import { parsePostFieldConfig } from "@/lib/post-fields/validation";
 import { parseReactionKey } from "@/lib/reactions/validation";
@@ -187,7 +187,7 @@ export async function getBoardPageData(
         take: MEMBER_PREVIEW_LIMIT,
         select: {
           role: true,
-          user: { select: { ...publicUserSelect, emailEncrypted: true } },
+          user: { select: { ...publicUserSelect, loginIdentifierEncrypted: true } },
         },
       },
       _count: {
@@ -263,7 +263,7 @@ export async function getBoardPageData(
           role: member.role,
           user: {
             ...toPublicAuthorDTO(member.user),
-            email: canManageBoard ? maskEmail(decryptUserEmail(member.user)) : null,
+            loginIdentifier: canManageBoard ? maskLoginIdentifier(decryptUserLoginIdentifier(member.user)) : null,
           },
         })),
         sections: board.sections.map((section) => ({

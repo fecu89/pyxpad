@@ -92,7 +92,6 @@ export function SectionColumn({ section, capabilities, currentUserId, fieldConfi
       <section id={`section-${section.id}`} ref={sortable.setNodeRef} style={style} className={`section-column column-${index % 5} ${sortable.isDragging ? "dragging" : ""}`}>
         <header className="section-header" {...sortable.attributes} {...dragPointerListeners}>
           <div onDoubleClick={() => canManage && setEditing(true)} title={canManage ? "더블클릭하면 제목·안내 문구를 바꿀 수 있어요" : undefined}>
-            <span className="section-index">{String(index + 1).padStart(2, "0")}</span>
             <h2>{section.title}</h2>
           </div>
           <span className="section-count">{section.totalPostCount}</span>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowRight, Copy, Eye, FolderOpen, Hourglass, LayoutTemplate, PencilLine, Plus, ShieldCheck, SortAsc, Star, Users, XCircle } from "lucide-react";
+import { ArrowRight, Copy, Eye, Hourglass, LayoutTemplate, PencilLine, Plus, ShieldCheck, SortAsc, Star, Users, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { CreateBoardButton } from "@/components/home/create-board-actions";
 import { PadGrid, sortPads, type DashboardSort } from "@/components/home/pad-grid";
@@ -87,11 +87,6 @@ export function MyPadsView({
           {ownedCount > 0 && <button type="button" aria-pressed={filter === "OWNED"} onClick={() => setFilter("OWNED")}><ShieldCheck size={14} aria-hidden />내가 만든 패드 {ownedCount}</button>}
         </nav>
       )}
-
-      <div className={styles.folderGuide}>
-        <FolderOpen size={18} aria-hidden />
-        <span><b>패드를 폴더로 정리할 수 있어요.</b><small>카드의 ‘…’ 메뉴에서 담을 폴더를 고르세요. 새 폴더는 왼쪽 사이드바의 ‘내 폴더’에서 만듭니다.</small></span>
-      </div>
 
       {groups.length > 0
         ? groups.map((group) => (

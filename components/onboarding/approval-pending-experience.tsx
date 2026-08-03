@@ -11,7 +11,7 @@ import styles from "@/components/onboarding/approval-pending.module.css";
 
 type ApprovalPendingProps = {
   name: string | null;
-  email: string;
+  loginIdentifier: string;
   image: string | null;
   schoolName: string;
   departmentName: string;
@@ -29,7 +29,7 @@ export function ApprovalPendingExperience(props: ApprovalPendingProps) {
 
 function ApprovalPendingContent({
   name,
-  email,
+  loginIdentifier,
   image,
   schoolName,
   departmentName,
@@ -84,8 +84,8 @@ function ApprovalPendingContent({
         <p className={styles.description}>승인이 완료되면 교사 권한과 선택한 소속이 연결됩니다. 브라우저를 닫아도 신청과 승인 결과는 그대로 유지돼요.</p>
 
         <div className={styles.profile}>
-          <Avatar name={name} email={email} image={image} size="medium" />
-          <span><b>{name || "교사 신청자"}</b><small>{email}</small></span>
+          <Avatar name={name} identifier={loginIdentifier} image={image} size="medium" />
+          <span><b>{name || "교사 신청자"}</b><small>{loginIdentifier}</small></span>
         </div>
 
         <dl className={styles.summary}>

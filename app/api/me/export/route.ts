@@ -1,25 +1,27 @@
 import { requireActiveUser } from "@/lib/auth/authorization";
 import { apiError } from "@/lib/http";
 import { getPrisma } from "@/lib/prisma";
-import { decryptUserEmail } from "@/lib/users/repository";
+import { decryptUserLoginIdentifier } from "@/lib/users/repository";
 
 export async function GET() {
   try {
     const user = await requireActiveUser();
     const prisma = getPrisma();
     const [profile, ownedBoards, memberships, posts, comments] = await Promise.all([
-      prisma.user.findUniqueOrThrow({ where: { id: user.id }, select: { id: true, emailEncrypted: true, role: true, createdAt: true } }),
+      prisma.user.findUniqueOrThrow({ where: { id: user.id }, select: { id: true, loginIdentifierEncrypted: true, role: true, createdAt: true } }),
       prisma.board.findMany({ where: { ownerId: user.id }, select: { id: true, slug: true, title: true, discoveryScope: true, createdAt: true } }),
       prisma.boardMember.findMany({ where: { userId: user.id }, select: { role: true, joinedAt: true, board: { select: { id: true, slug: true, title: true } } } }),
       prisma.post.findMany({ where: { authorId: user.id, deletedAt: null }, select: { id: true, boardId: true, title: true, body: true, createdAt: true } }),
       prisma.comment.findMany({ where: { authorId: user.id, deletedAt: null }, select: { id: true, postId: true, body: true, createdAt: true } }),
     ]);
 
+    const loginIdentifier = decryptUserLoginIdentifier(profile);
     const data = {
       exportedAt: new Date().toISOString(),
       profile: {
         id: profile.id,
-        email: decryptUserEmail(profile),
+        loginType: user.loginType,
+        ...(user.loginType === "LOGIN_ID" ? { loginId: loginIdentifier } : { email: loginIdentifier }),
         name: user.name,
         role: profile.role,
         joinedPyxpadAt: profile.createdAt.toISOString(),

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 실행 앱이 아니라 디자인·기능 참고용으로 받은 정적 프로토타입 번들입니다.
+    "adminExp/**",
   ]),
 ]);
 

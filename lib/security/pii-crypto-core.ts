@@ -34,12 +34,45 @@ function associatedData(userId: string, field: UserPiiField) {
 }
 
 export function normalizeEmail(email: string) {
-  return email.trim().normalize("NFKC").toLowerCase();
+  return normalizeLoginIdentifier(email);
 }
 
-export function createEmailLookup(email: string) {
+export function normalizeLoginIdentifier(value: string) {
+  return value.trim().normalize("NFKC").toLocaleLowerCase("en-US");
+}
+
+export function createLoginIdentifierLookup(value: string) {
   const lookupKey = decodeKey(requireEnvironment("PII_LOOKUP_KEY"), "PII_LOOKUP_KEY");
-  return createHmac("sha256", lookupKey).update(normalizeEmail(email), "utf8").digest("base64url");
+  return createHmac("sha256", lookupKey).update(normalizeLoginIdentifier(value), "utf8").digest("base64url");
+}
+
+// 기존 암호문은 AAD 필드명이 `email`이므로 DB 컬럼을 loginIdentifier로 일반화해도 이 값은
+// 바꾸지 않습니다. 이 래퍼를 통해 새 코드에서 레거시 암호화 세부사항이 새어나오지 않게 합니다.
+export function encryptUserLoginIdentifier(userId: string, value: string) {
+  return encryptUserPii(userId, "email", value);
+}
+
+export function decryptUserLoginIdentifier(userId: string, payload: string) {
+  return decryptUserPii(userId, "email", payload);
+}
+
+export function normalizeNickname(value: string) {
+  return value.trim().normalize("NFKC").replace(/\s+/gu, " ");
+}
+
+function createNamespacedLookup(namespace: string, value: string) {
+  const lookupKey = decodeKey(requireEnvironment("PII_LOOKUP_KEY"), "PII_LOOKUP_KEY");
+  return createHmac("sha256", lookupKey)
+    .update(`${namespace}\0${value}`, "utf8")
+    .digest("base64url");
+}
+
+export function createNicknameLookup(value: string) {
+  return createNamespacedLookup("user-nickname:v1", normalizeNickname(value).toLocaleLowerCase("ko-KR"));
+}
+
+export function createAuthSecurityLookup(namespace: string, value: string) {
+  return createNamespacedLookup(`auth-security:v1:${namespace}`, value);
 }
 
 export function encryptUserPii(userId: string, field: UserPiiField, value: string) {
@@ -78,11 +111,17 @@ export function decryptOptionalUserPii(userId: string, field: UserPiiField, payl
   return payload ? decryptUserPii(userId, field, payload) : null;
 }
 
-export function maskEmail(email: string) {
-  const separator = email.lastIndexOf("@");
-  if (separator <= 0) return "***";
-  const local = email.slice(0, separator);
-  const domain = email.slice(separator + 1);
+export function maskLoginIdentifier(value: string) {
+  const separator = value.lastIndexOf("@");
+  if (separator <= 0) {
+    const characters = Array.from(value);
+    if (characters.length <= 2) return "*".repeat(Math.max(1, characters.length));
+    const visibleStart = characters.slice(0, Math.min(2, characters.length - 1)).join("");
+    const visibleEnd = characters.slice(-Math.min(2, characters.length - visibleStart.length)).join("");
+    return `${visibleStart}${"*".repeat(Math.max(3, characters.length - visibleStart.length - visibleEnd.length))}${visibleEnd}`;
+  }
+  const local = value.slice(0, separator);
+  const domain = value.slice(separator + 1);
   const visible = local.slice(0, Math.min(2, local.length));
   return `${visible}${"*".repeat(Math.max(3, local.length - visible.length))}@${domain}`;
 }

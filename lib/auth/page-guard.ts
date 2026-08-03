@@ -2,26 +2,9 @@ import "server-only";
 
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { safeInternalCallbackUrl } from "@/lib/auth/callback-url";
 
-const CALLBACK_BASE_URL = "https://pyxpad.local";
-
-export function safeInternalCallbackUrl(
-  value: string | string[] | undefined,
-  fallback = "/",
-): string {
-  const candidate = Array.isArray(value) ? value[0] : value;
-  if (!candidate || !candidate.startsWith("/") || candidate.startsWith("//") || candidate.includes("\\")) {
-    return fallback;
-  }
-
-  try {
-    const callbackUrl = new URL(candidate, CALLBACK_BASE_URL);
-    if (callbackUrl.origin !== CALLBACK_BASE_URL) return fallback;
-    return callbackUrl.pathname + callbackUrl.search + callbackUrl.hash;
-  } catch {
-    return fallback;
-  }
-}
+export { safeInternalCallbackUrl } from "@/lib/auth/callback-url";
 
 export function loginRedirectPath(callbackUrl: string): string {
   const searchParams = new URLSearchParams({
