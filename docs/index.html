@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PyxPad — 교실의 생각을 카드로 모으는 협업 보드</title>
+<meta name="description" content="포스트잇처럼 붙이고 끌어서 옮기는 Padlet 스타일 협업 보드. Next.js 16 · PostgreSQL · Prisma로 만든 오픈소스 프로젝트." />
+<meta name="color-scheme" content="light dark" />
+<meta property="og:title" content="PyxPad — 교실의 생각을 카드로 모으는 협업 보드" />
+<meta property="og:description" content="포스트잇처럼 붙이고 끌어서 옮기는 Padlet 스타일 협업 보드. Next.js 16 · PostgreSQL · Prisma." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="screenshots/02-teacher-board.png" />
+<link rel="icon" href="favicon.ico" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap" />
+<script>
+/* 첫 페인트 전에 테마를 정합니다 — 이게 없으면 어두운 화면 사용자에게 흰 화면이 한 번 번쩍입니다. */
+document.documentElement.dataset.theme =
+  localStorage.getItem('pyxpad-theme') ||
+  (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+</script>
+<style>
+/* ─────────────────────────────────────────────────────────────
+   PyxPad project page
+   팔레트·라운드·그림자 토큰은 app/globals.css의 실제 값에서 가져왔습니다.
+   페이지 배경의 점 격자도 앱의 .app-shell-content와 같은 22px 격자입니다.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --paper:        oklch(0.972 0.006 250);
+  --dot:          oklch(0.885 0.008 250);
+  --surface:      oklch(1 0 0);
+  --surface-2:    oklch(0.985 0.004 250);
+  --ink:          oklch(0.19 0.012 255);
+  --ink-2:        oklch(0.44 0.015 255);
+  --ink-3:        oklch(0.525 0.014 255);
+  --line:         oklch(0.905 0.006 255);
+  --line-strong:  oklch(0.845 0.008 255);
+  --blue:         oklch(0.55 0.16 255);
+  --blue-ink:     oklch(0.42 0.16 255);
+  --blue-wash:    oklch(0.955 0.025 255);
+  --on-blue:      oklch(1 0 0);
+
+  --t-mint:   oklch(0.945 0.036 162);
+  --t-sun:    oklch(0.952 0.042 88);
+  --t-rose:   oklch(0.947 0.030 350);
+  --t-sky:    oklch(0.947 0.036 216);
+  --t-violet: oklch(0.947 0.032 302);
+  --t-coral:  oklch(0.948 0.036 42);
+
+  --shadow-sm: 0 2px 10px rgba(20, 24, 41, .06);
+  --shadow-md: 0 18px 44px rgba(20, 24, 41, .12);
+  --shadow-lg: 0 28px 80px rgba(20, 24, 41, .18);
+
+  --r-sm: 10px; --r-md: 14px; --r-lg: 18px; --r-pill: 999px;
+
+  --sans: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+:root[data-theme="dark"] {
+  --paper:        oklch(0.183 0.012 258);
+  --dot:          oklch(0.268 0.014 258);
+  --surface:      oklch(0.228 0.014 258);
+  --surface-2:    oklch(0.252 0.014 258);
+  --ink:          oklch(0.958 0.004 250);
+  --ink-2:        oklch(0.755 0.010 250);
+  --ink-3:        oklch(0.625 0.012 250);
+  --line:         oklch(0.318 0.014 258);
+  --line-strong:  oklch(0.395 0.016 258);
+  --blue:         oklch(0.735 0.145 255);
+  --blue-ink:     oklch(0.82 0.11 255);
+  --blue-wash:    oklch(0.285 0.045 258);
+  --on-blue:      oklch(0.17 0.02 258);
+
+  --t-mint:   oklch(0.305 0.048 162);
+  --t-sun:    oklch(0.312 0.050 88);
+  --t-rose:   oklch(0.305 0.044 350);
+  --t-sky:    oklch(0.305 0.048 216);
+  --t-violet: oklch(0.305 0.046 302);
+  --t-coral:  oklch(0.308 0.048 42);
+
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, .34);
+  --shadow-md: 0 18px 44px rgba(0, 0, 0, .46);
+  --shadow-lg: 0 28px 80px rgba(0, 0, 0, .58);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 84px; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font-family: var(--sans);
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image: radial-gradient(var(--dot) .8px, transparent .8px);
+  background-size: 22px 22px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+img { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
+:focus-visible { outline: 2.5px solid var(--blue); outline-offset: 3px; border-radius: 4px; }
+
+.wrap { width: min(1180px, 100% - 40px); margin-inline: auto; }
+.band { padding-block: clamp(56px, 9vw, 104px); }
+.band-tint { background: color-mix(in oklch, var(--surface) 62%, transparent); border-block: 1px solid var(--line); }
+
+.eyebrow {
+  font-family: var(--mono); font-size: .705rem; font-weight: 600;
+  letter-spacing: .155em; text-transform: uppercase; color: var(--ink-3);
+}
+
+/* ── 상단바 ─────────────────────────────────────────────── */
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 14px;
+  height: 62px; padding-inline: clamp(16px, 3vw, 26px);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in oklch, var(--paper) 82%, transparent);
+  backdrop-filter: saturate(180%) blur(14px);
+}
+.nav-brand { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 1.02rem; letter-spacing: -.025em; text-decoration: none; }
+.nav-mark {
+  display: grid; place-items: center; width: 27px; height: 27px;
+  border-radius: 8px; background: var(--blue); color: var(--on-blue);
+  font-size: .78rem; font-weight: 800;
+}
+.nav-links { display: flex; gap: 4px; margin-left: auto; }
+.nav-links a {
+  padding: 7px 12px; border-radius: var(--r-pill);
+  font-size: .875rem; font-weight: 600; color: var(--ink-2); text-decoration: none;
+}
+.nav-links a:hover { background: var(--blue-wash); color: var(--blue-ink); }
+.nav-side { display: flex; align-items: center; gap: 8px; }
+.nav-icon {
+  display: grid; place-items: center; width: 36px; height: 36px; padding: 0;
+  border: 1px solid var(--line); border-radius: var(--r-pill);
+  background: var(--surface); color: var(--ink-2); cursor: pointer;
+}
+.nav-icon:hover { border-color: var(--line-strong); color: var(--ink); }
+.nav-gh {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 36px; padding-inline: 15px;
+  border: 0; border-radius: var(--r-pill);
+  background: var(--ink); color: var(--paper);
+  font-size: .855rem; font-weight: 700; text-decoration: none; white-space: nowrap;
+}
+.nav-gh:hover { background: var(--blue); color: var(--on-blue); }
+@media (max-width: 760px) { .nav-links { display: none; } }
+
+/* ── 히어로 ─────────────────────────────────────────────── */
+.hero { padding-top: clamp(46px, 7vw, 78px); padding-bottom: clamp(26px, 4vw, 40px); }
+.hero-crumb {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 9px;
+  margin-bottom: 22px; font-size: .8rem; color: var(--ink-3);
+}
+.hero-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border: 1px solid var(--line); border-radius: var(--r-pill);
+  background: var(--surface); font-weight: 600; color: var(--ink-2);
+}
+.hero-chip b { color: var(--blue-ink); font-weight: 700; }
+.hero-title {
+  margin: 0 0 20px;
+  font-size: clamp(2.55rem, 7.6vw, 5.3rem);
+  font-weight: 900; letter-spacing: -.048em; line-height: .99;
+  text-wrap: balance;
+}
+.hero-title em { font-style: normal; color: var(--blue); }
+.hero-lede {
+  max-width: 46ch; margin: 0 0 30px;
+  font-size: clamp(1.02rem, 1.7vw, 1.2rem); color: var(--ink-2); text-wrap: pretty;
+}
+.hero-cta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 46px; padding-inline: 22px;
+  border: 1px solid transparent; border-radius: var(--r-pill);
+  font-size: .93rem; font-weight: 700; text-decoration: none; cursor: pointer;
+}
+.btn-primary { background: var(--blue); color: var(--on-blue); box-shadow: var(--shadow-sm); }
+.btn-primary:hover { background: var(--blue-ink); }
+.btn-ghost { background: var(--surface); border-color: var(--line-strong); color: var(--ink); }
+.btn-ghost:hover { background: var(--blue-wash); border-color: var(--blue); color: var(--blue-ink); }
+.hero-note { margin: 14px 0 0; font-size: .82rem; color: var(--ink-3); }
+
+/* ── 진짜 패드(드래그 가능) ─────────────────────────────── */
+.pad { padding-bottom: clamp(52px, 8vw, 90px); }
+.pad-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  padding: 11px 16px; margin-bottom: 14px;
+  border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--surface); box-shadow: var(--shadow-sm);
+}
+.pad-bar-title { font-weight: 800; letter-spacing: -.02em; }
+.pad-bar-sub { font-size: .82rem; color: var(--ink-3); }
+.pad-bar-hint {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 7px;
+  font-size: .795rem; color: var(--ink-2);
+}
+.pad-bar-key {
+  font-family: var(--mono); font-size: .72rem; padding: 2px 7px;
+  border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface-2);
+}
+.pad-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
+@media (max-width: 900px) { .pad-cols { grid-template-columns: 1fr; } }
+
+.pad-section {
+  display: flex; flex-direction: column; min-width: 0;
+  border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--surface-2);
+}
+.pad-section.is-target { border-color: var(--blue); }
+.pad-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 14px 11px; border-bottom: 1px solid var(--line);
+}
+.pad-head-no { font-family: var(--mono); font-size: .72rem; font-weight: 600; color: var(--ink-3); }
+.pad-head-title { flex: 1; min-width: 0; font-size: .95rem; font-weight: 800; letter-spacing: -.02em; }
+.pad-head-count {
+  display: grid; place-items: center; min-width: 23px; height: 23px; padding-inline: 6px;
+  border-radius: var(--r-pill); background: var(--surface);
+  border: 1px solid var(--line);
+  font-family: var(--mono); font-size: .72rem; font-weight: 600; color: var(--ink-2);
+}
+.pad-list { display: flex; flex-direction: column; gap: 10px; min-height: 96px; margin: 0; padding: 12px; list-style: none; }
+
+.pad-card {
+  position: relative; padding: 12px 13px 11px;
+  border: 1px solid color-mix(in oklch, var(--ink) 9%, transparent);
+  border-radius: var(--r-md); background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .16s ease, transform .16s ease;
+}
+.pad-card[data-tint="mint"]   { background: var(--t-mint); }
+.pad-card[data-tint="sun"]    { background: var(--t-sun); }
+.pad-card[data-tint="rose"]   { background: var(--t-rose); }
+.pad-card[data-tint="sky"]    { background: var(--t-sky); }
+.pad-card[data-tint="violet"] { background: var(--t-violet); }
+.pad-card[data-tint="coral"]  { background: var(--t-coral); }
+.pad-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.pad-card.is-src { opacity: .3; }
+.pad-card.is-held { box-shadow: 0 0 0 2.5px var(--blue), var(--shadow-md); }
+
+.pad-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.pad-avatar {
+  display: grid; place-items: center; width: 22px; height: 22px; flex-shrink: 0;
+  border-radius: 7px; background: color-mix(in oklch, var(--ink) 12%, transparent);
+  font-size: .68rem; font-weight: 800;
+}
+.pad-author { flex: 1; min-width: 0; font-size: .78rem; font-weight: 600; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pad-grip {
+  display: grid; place-items: center; width: 26px; height: 26px; flex-shrink: 0; padding: 0;
+  border: 0; border-radius: 7px; background: transparent; color: var(--ink-3);
+  cursor: grab; touch-action: none;
+}
+.pad-grip:hover { background: color-mix(in oklch, var(--ink) 8%, transparent); color: var(--ink); }
+.pad-grip:active { cursor: grabbing; }
+.pad-card-title { margin: 0 0 5px; font-size: .95rem; font-weight: 750; letter-spacing: -.015em; line-height: 1.35; }
+.pad-card-body { margin: 0; font-size: .845rem; line-height: 1.55; color: var(--ink-2); }
+.pad-card-foot {
+  display: flex; align-items: center; gap: 12px; margin-top: 10px;
+  font-family: var(--mono); font-size: .7rem; color: var(--ink-3);
+}
+.pad-card-foot span { display: inline-flex; align-items: center; gap: 4px; }
+.pad-card-foot time { margin-left: auto; }
+
+.pad-ph {
+  border: 1.5px dashed var(--blue); border-radius: var(--r-md);
+  background: var(--blue-wash);
+}
+.pad-ghost {
+  position: fixed; z-index: 100; margin: 0; pointer-events: none;
+  box-shadow: var(--shadow-lg); transform: rotate(1.6deg) scale(1.02);
+  transition: none;
+}
+.pad-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+body.is-dragging { user-select: none; cursor: grabbing; }
+
+/* ── 섹션 제목 ──────────────────────────────────────────── */
+.sec-head { max-width: 62ch; margin-bottom: clamp(28px, 4vw, 42px); }
+.sec-head .eyebrow { display: block; margin-bottom: 12px; }
+.sec-title { margin: 0 0 12px; font-size: clamp(1.62rem, 3.3vw, 2.35rem); font-weight: 850; letter-spacing: -.035em; line-height: 1.14; }
+.sec-lede { margin: 0; color: var(--ink-2); font-size: 1.005rem; text-wrap: pretty; }
+
+/* ── 화면 ───────────────────────────────────────────────── */
+.shot-motion { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-bottom: 18px; }
+.shot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 18px; }
+@media (max-width: 760px) { .shot-motion { grid-template-columns: 1fr; } }
+.shot {
+  display: flex; flex-direction: column; overflow: hidden;
+  border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--surface); box-shadow: var(--shadow-sm); text-decoration: none;
+}
+.shot:hover { border-color: var(--line-strong); box-shadow: var(--shadow-md); }
+.shot img { width: 100%; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+/* 원본 스크린샷의 세로 비율이 제각각이라 격자에서는 위쪽을 기준으로 잘라 줄을 맞춥니다.
+   전체 화면은 이미지를 눌러서 봅니다. 움직이는 GIF 두 장은 자르지 않습니다. */
+.shot-grid .shot img { aspect-ratio: 16 / 10; object-fit: cover; object-position: top center; }
+.shot-cap { padding: 12px 15px 14px; }
+.shot-cap b { display: block; font-size: .91rem; font-weight: 750; letter-spacing: -.015em; }
+.shot-cap span { display: block; margin-top: 3px; font-size: .81rem; color: var(--ink-3); }
+
+/* ── 기능 ───────────────────────────────────────────────── */
+/* 300px 하한이면 1180px 컨테이너에서 정확히 3열이 되어 카드 9장이 3·3·3으로 떨어집니다. */
+.feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.feat {
+  padding: 20px 19px 21px;
+  border: 1px solid color-mix(in oklch, var(--ink) 9%, transparent);
+  border-radius: var(--r-lg);
+}
+.feat[data-tint="mint"]   { background: var(--t-mint); }
+.feat[data-tint="sun"]    { background: var(--t-sun); }
+.feat[data-tint="rose"]   { background: var(--t-rose); }
+.feat[data-tint="sky"]    { background: var(--t-sky); }
+.feat[data-tint="violet"] { background: var(--t-violet); }
+.feat[data-tint="coral"]  { background: var(--t-coral); }
+.feat h3 { margin: 0 0 8px; font-size: 1rem; font-weight: 800; letter-spacing: -.02em; }
+.feat p { margin: 0; font-size: .875rem; line-height: 1.6; color: var(--ink-2); }
+
+/* 문단 안에 섞이는 짧은 코드. pre 블록(.code pre)과는 별개입니다. */
+.sec-lede code, .feat p code, .step p code {
+  padding: 1.5px 6px; border-radius: 6px;
+  background: color-mix(in oklch, var(--ink) 9%, transparent);
+  color: var(--ink);
+  font-family: var(--mono); font-size: .85em; letter-spacing: -.01em;
+}
+
+/* ── 설치 ───────────────────────────────────────────────── */
+.step-list { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; counter-reset: step; }
+.step {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 15px; align-items: start;
+  padding: 17px 18px;
+  border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--surface); box-shadow: var(--shadow-sm);
+}
+.step::before {
+  counter-increment: step; content: counter(step, decimal-leading-zero);
+  display: grid; place-items: center; width: 34px; height: 34px;
+  border-radius: var(--r-pill); background: var(--blue-wash); color: var(--blue-ink);
+  font-family: var(--mono); font-size: .78rem; font-weight: 600;
+}
+.step h3 { margin: 5px 0 6px; font-size: .97rem; font-weight: 800; letter-spacing: -.02em; }
+.step p { margin: 0 0 11px; font-size: .875rem; color: var(--ink-2); }
+.step p:last-child { margin-bottom: 0; }
+.step a { color: var(--blue-ink); text-underline-offset: 3px; }
+
+.code { position: relative; margin: 0; }
+.code pre {
+  margin: 0; padding: 14px 62px 14px 15px; overflow-x: auto;
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface-2);
+  font-family: var(--mono); font-size: .81rem; line-height: 1.75; color: var(--ink);
+}
+.code-copy {
+  position: absolute; top: 9px; right: 9px;
+  padding: 5px 11px; border: 1px solid var(--line-strong); border-radius: var(--r-pill);
+  background: var(--surface); color: var(--ink-2);
+  font-family: var(--mono); font-size: .7rem; font-weight: 600; cursor: pointer;
+}
+.code-copy:hover { border-color: var(--blue); color: var(--blue-ink); }
+.cmt { color: var(--ink-3); }
+
+/* ── 스택 · 문서 ────────────────────────────────────────── */
+.split { display: grid; grid-template-columns: 1.15fr 1fr; gap: clamp(28px, 5vw, 62px); align-items: start; }
+@media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
+.stack { display: grid; gap: 0; margin: 0; }
+.stack-row {
+  display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: 16px;
+  padding: 12px 0; border-bottom: 1px solid var(--line);
+}
+.stack-row:first-child { border-top: 1px solid var(--line); }
+.stack-row dt { font-family: var(--mono); font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); padding-top: 2px; }
+.stack-row dd { margin: 0; font-size: .9rem; font-weight: 600; letter-spacing: -.01em; }
+
+.doc-list { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.doc {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 15px;
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface); text-decoration: none;
+}
+.doc:hover { border-color: var(--blue); background: var(--blue-wash); }
+.doc-name { font-family: var(--mono); font-size: .82rem; font-weight: 600; }
+.doc-desc { font-size: .82rem; color: var(--ink-3); margin-left: auto; text-align: right; }
+@media (max-width: 520px) { .doc { flex-wrap: wrap; gap: 4px; } .doc-desc { margin-left: 0; text-align: left; width: 100%; } }
+
+/* ── 푸터 ───────────────────────────────────────────────── */
+.foot { padding-block: 36px 44px; border-top: 1px solid var(--line); }
+.foot-in { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-size: .84rem; color: var(--ink-3); }
+.foot-links { display: flex; gap: 16px; margin-left: auto; }
+.foot-links a { color: var(--ink-2); text-decoration: none; font-weight: 600; }
+.foot-links a:hover { color: var(--blue-ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition-duration: .01ms !important; }
+  .pad-ghost { transform: none; }
+  .pad-card:hover { transform: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a class="nav-brand" href="#top"><span class="nav-mark" aria-hidden="true">P</span> pyxpad</a>
+  <nav class="nav-links" aria-label="페이지 안내">
+    <a href="#screens">화면</a>
+    <a href="#features">기능</a>
+    <a href="#install">설치</a>
+    <a href="#stack">기술</a>
+  </nav>
+  <div class="nav-side">
+    <button class="nav-icon" id="theme-toggle" type="button" aria-label="어두운 화면으로 바꾸기">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+    </button>
+    <a class="nav-gh" href="https://github.com/fecu89/pyxpad">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 0 0-2.5 15.6c.4.07.55-.17.55-.38l-.01-1.34c-2.23.48-2.7-1.07-2.7-1.07-.36-.93-.89-1.18-.89-1.18-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.67.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8 8 0 0 0 8 0Z"/></svg>
+      GitHub
+    </a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- 히어로 -->
+  <section class="wrap hero">
+    <div class="hero-crumb">
+      <span class="hero-chip">🏫 교실·워크숍용</span>
+      <span class="hero-chip">오픈소스 · <b>MIT</b></span>
+      <span class="hero-chip">Next.js 16 · PostgreSQL</span>
+    </div>
+    <h1 class="hero-title">교실의 생각을<br /><em>카드로</em> 모읍니다.</h1>
+    <p class="hero-lede">
+      포스트잇처럼 붙이고, 길게 눌러 옮기고, 댓글로 이어가는 협업 보드.
+      학교·학급 단위 권한과 학생 개인정보 암호화까지 갖춘 Padlet 스타일 오픈소스 프로젝트입니다.
+    </p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="https://github.com/fecu89/pyxpad">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 0 0-2.5 15.6c.4.07.55-.17.55-.38l-.01-1.34c-2.23.48-2.7-1.07-2.7-1.07-.36-.93-.89-1.18-.89-1.18-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.67.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8 8 0 0 0 8 0Z"/></svg>
+        저장소 열기
+      </a>
+      <a class="btn btn-ghost" href="#install">설치 안내 보기</a>
+    </div>
+    <p class="hero-note">아래 보드는 그림이 아닙니다 — 실제로 카드를 끌어서 다른 열로 옮길 수 있습니다.</p>
+  </section>
+
+  <!-- 진짜 패드 -->
+  <section class="wrap pad" aria-labelledby="pad-h">
+    <h2 id="pad-h" class="pad-live">체험용 데모 패드</h2>
+
+    <div class="pad-bar">
+      <span class="pad-bar-title">PyxPad 소개 패드</span>
+      <span class="pad-bar-sub">· 김하늘 선생님 · 데모 데이터</span>
+      <span class="pad-bar-hint">
+        카드를 끌거나, 손잡이에서
+        <kbd class="pad-bar-key">Space</kbd>
+        <kbd class="pad-bar-key">↑ ↓ ← →</kbd>
+      </span>
+    </div>
+
+    <div class="pad-cols" id="pad">
+
+      <section class="pad-section" data-section aria-label="무엇인가요">
+        <header class="pad-head">
+          <span class="pad-head-no">01</span>
+          <h3 class="pad-head-title">무엇인가요</h3>
+          <span class="pad-head-count" data-count aria-hidden="true">2</span>
+        </header>
+        <ul class="pad-list" data-list>
+          <li class="pad-card" data-tint="mint" data-title="포스트잇처럼 붙이는 보드">
+            <div class="pad-card-top">
+              <span class="pad-avatar" aria-hidden="true">김</span>
+              <span class="pad-author">김하늘 선생님</span>
+              <button class="pad-grip" type="button" aria-label="포스트잇처럼 붙이는 보드 — 옮기기"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button>
+            </div>
+            <h4 class="pad-card-title">포스트잇처럼 붙이는 보드</h4>
+            <p class="pad-card-body">교사가 패드를 만들고 학생이 카드를 올립니다. 섹션(열)으로 주제를 나눠 한 화면에서 반 전체의 생각을 봅니다.</p>
+            <div class="pad-card-foot"><span>♥ 12</span><span>💬 3</span><time datetime="2026-07-30">7. 30.</time></div>
+          </li>
+          <li class="pad-card" data-tint="sky" data-title="레이아웃 6종">
+            <div class="pad-card-top">
+              <span class="pad-avatar" aria-hidden="true">김</span>
+              <span class="pad-author">김하늘 선생님</span>
+              <button class="pad-grip" type="button" aria-label="레이아웃 6종 — 옮기기"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button>
+            </div>
+            <h4 class="pad-card-title">레이아웃 6종</h4>
+            <p class="pad-card-body">담벼락 · 격자 · 피드 · 타임라인 · 표 · 열. 같은 자료를 수업 방식에 맞춰 다시 배치합니다.</p>
+            <div class="pad-card-foot"><span>♥ 8</span><span>💬 1</span><time datetime="2026-07-30">7. 30.</time></div>
+          </li>
+        </ul>
+      </section>
+
+      <section class="pad-section" data-section aria-label="어떻게 쓰나요">
+        <header class="pad-head">
+          <span class="pad-head-no">02</span>
+          <h3 class="pad-head-title">어떻게 쓰나요</h3>
+          <span class="pad-head-count" data-count aria-hidden="true">3</span>
+        </header>
+        <ul class="pad-list" data-list>
+          <li class="pad-card" data-tint="sun" data-title="길게 눌러 순서 바꾸기">
+            <div class="pad-card-top">
+              <span class="pad-avatar" aria-hidden="true">이</span>
+              <span class="pad-author">이로운</span>
+              <button class="pad-grip" type="button" aria-label="길게 눌러 순서 바꾸기 — 옮기기"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button>
+            </div>
+            <h4 class="pad-card-title">길게 눌러 순서 바꾸기</h4>
+            <p class="pad-card-body">모바일은 꾹 누르기, 데스크톱은 살짝 끌기로 스크롤과 구분합니다. 마우스 없이 스페이스바+방향키로도 옮깁니다.</p>
+            <div class="pad-card-foot"><span>♥ 21</span><span>💬 5</span><time datetime="2026-07-30">7. 30.</time></div>
+          </li>
+          <li class="pad-card" data-tint="violet" data-title="파일과 링크 붙이기">
+            <div class="pad-card-top">
+              <span class="pad-avatar" aria-hidden="true">이</span>
+              <span class="pad-author">이로운</span>
+              <button class="pad-grip" type="button" aria-label="파일과 링크 붙이기 — 옮기기"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button>
+            </div>
+            <h4 class="pad-card-title">파일과 링크 붙이기</h4>
+            <p class="pad-card-body">사진은 WebP 썸네일로, 링크는 제목·대표 이미지를 가져와 미리보기 카드로. 합쳐서 게시물당 20개까지.</p>
+            <div class="pad-card-foot"><span>♥ 9</span><span>💬 2</span><time datetime="2026-07-31">7. 31.</time></div>
+          </li>
+          <li class="pad-card" data-tint="rose" data-title="댓글과 반응으로 대화">
+            <div class="pad-card-top">
+              <span class="pad-avatar" aria-hidden="true">김</span>
+              <span class="pad-author">김하늘 선생님</span>
+              <button class="pad-grip" type="button" aria-label="댓글과 반응으로 대화 — 옮기기"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button>
+            </div>
+            <h4 class="pad-card-title">댓글과 반응으로 대화</h4>
+            <p class="pad-card-body">답글 트리, 이모지 반응, 같은 학교 구성원 멘션. 변경 사항은 SSE로 새로고침 없이 반영됩니다.</p>
+            <div class="pad-card-foot"><span>♥ 15</span><span>💬 7</span><time datetime="2026-07-31">7. 31.</time></div>
+          </li>
+        </ul>
+      </section>
+
+      <section class="pad-section" data-section aria-label="교실에서 안전한가요">
+        <header class="pad-head">
+          <span class="pad-head-no">03</span>
+          <h3 class="pad-head-title">교실에서 안전한가요</h3>
+          <span class="pad-head-count" data-count aria-hidden="true">2</span>
+        </header>
+        <ul class="pad-list" data-list>
+          <li class="pad-card" data-tint="coral" data-title="학생 개인정보는 암호화">
+            <div class="pad-card-top">
+              <span class="pad-avatar" aria-hidden="true">김</span>
+              <span class="pad-author">김하늘 선생님</span>
+              <button class="pad-grip" type="button" aria-label="학생 개인정보는 암호화 — 옮기기"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button>
+            </div>
+            <h4 class="pad-card-title">학생 개인정보는 암호화</h4>
+            <p class="pad-card-body">이름·로그인 아이디는 암호화해 저장하고 화면에서는 마스킹합니다. 키 교체용 스크립트도 함께 들어 있습니다.</p>
+            <div class="pad-card-foot"><span>♥ 18</span><span>💬 4</span><time datetime="2026-08-01">8. 1.</time></div>
+          </li>
+          <li class="pad-card" data-tint="mint" data-title="지워도 30일은 남습니다">
+            <div class="pad-card-top">
+              <span class="pad-avatar" aria-hidden="true">이</span>
+              <span class="pad-author">이로운</span>
+              <button class="pad-grip" type="button" aria-label="지워도 30일은 남습니다 — 옮기기"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button>
+            </div>
+            <h4 class="pad-card-title">지워도 30일은 남습니다</h4>
+            <p class="pad-card-body">삭제한 카드·섹션은 보관함에서 되살릴 수 있고, 작성자와 소유자는 언제든 영구 삭제할 수 있습니다.</p>
+            <div class="pad-card-foot"><span>♥ 6</span><span>💬 0</span><time datetime="2026-08-01">8. 1.</time></div>
+          </li>
+        </ul>
+      </section>
+
+    </div>
+    <p class="pad-live" id="pad-live" role="status" aria-live="polite"></p>
+  </section>
+
+  <!-- 화면 -->
+  <section class="band band-tint" id="screens">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Screens</span>
+        <h2 class="sec-title">실제 화면</h2>
+        <p class="sec-lede">전부 <code>npm run db:seed</code>로 채운 데모 학교·데모 계정 화면입니다. 실제 가입자 정보는 들어 있지 않습니다.</p>
+      </div>
+
+      <div class="shot-motion">
+        <a class="shot" href="screenshots/09-card-drag.gif">
+          <img src="screenshots/09-card-drag.gif" alt="카드를 다른 섹션으로 끌어서 옮기는 과정" loading="lazy" />
+          <span class="shot-cap"><b>카드 옮기기</b><span>손잡이를 잡고 다른 열로. 키보드로도 같은 동작이 됩니다.</span></span>
+        </a>
+        <a class="shot" href="screenshots/12-section-drag.gif">
+          <img src="screenshots/12-section-drag.gif" alt="섹션(열)의 순서를 끌어서 바꾸는 과정" loading="lazy" />
+          <span class="shot-cap"><b>열 옮기기</b><span>섹션 헤더를 잡으면 주제 순서 자체를 바꿉니다.</span></span>
+        </a>
+      </div>
+
+      <div class="shot-grid">
+        <a class="shot" href="screenshots/01-teacher-home.png">
+          <img src="screenshots/01-teacher-home.png" alt="교사 홈 — 내가 만든 패드 카드 목록" loading="lazy" />
+          <span class="shot-cap"><b>내 패드 홈</b><span>만든 패드와 최근 방문한 패드</span></span>
+        </a>
+        <a class="shot" href="screenshots/02-teacher-board.png">
+          <img src="screenshots/02-teacher-board.png" alt="패드 화면 — 섹션 3개와 카드들" loading="lazy" />
+          <span class="shot-cap"><b>패드 안</b><span>섹션으로 나눈 주제와 카드</span></span>
+        </a>
+        <a class="shot" href="screenshots/03-teacher-composer.png">
+          <img src="screenshots/03-teacher-composer.png" alt="게시물 작성 모달 — 제목, 본문, 첨부, 링크" loading="lazy" />
+          <span class="shot-cap"><b>카드 작성</b><span>사진·음성·파일·링크 첨부</span></span>
+        </a>
+        <a class="shot" href="screenshots/05-student-post-detail.png">
+          <img src="screenshots/05-student-post-detail.png" alt="게시물 상세 페이지 — 본문과 댓글" loading="lazy" />
+          <span class="shot-cap"><b>카드 상세</b><span>반응과 댓글로 이어지는 대화</span></span>
+        </a>
+        <a class="shot" href="screenshots/13-settings-appearance.png">
+          <img src="screenshots/13-settings-appearance.png" alt="패드 설정 › 외형 — 레이아웃, 색상, 글꼴" loading="lazy" />
+          <span class="shot-cap"><b>패드 설정</b><span>7개 탭 — 외형·권한·승인·멤버</span></span>
+        </a>
+        <a class="shot" href="screenshots/06-admin-panel.png">
+          <img src="screenshots/06-admin-panel.png" alt="관리자 센터 — 사용자 관리 화면(데모 계정만 표시)" loading="lazy" />
+          <span class="shot-cap"><b>관리자 센터</b><span>계정·권한·소속과 감사 로그</span></span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 기능 -->
+  <section class="band" id="features">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Features</span>
+        <h2 class="sec-title">들어 있는 것</h2>
+        <p class="sec-lede">수업에서 바로 쓸 수 있도록, 보드 편집부터 개인정보 처리와 내보내기까지 한 저장소에 담았습니다.</p>
+      </div>
+      <div class="feat-grid">
+        <article class="feat" data-tint="sky">
+          <h3>역할과 권한</h3>
+          <p>학생·교사·전체관리자 역할, 학교·학급 소속, 보드별 소유자/관리자/편집자/멤버/뷰어 권한, 서명된 세션 쿠키.</p>
+        </article>
+        <article class="feat" data-tint="sun">
+          <h3>보드 편집</h3>
+          <p>섹션·카드 생성/수정/정렬/소프트 삭제. 마우스는 거리, 터치는 지연 기준으로 활성화해 스크롤과 구분하고, 키보드 조작도 지원합니다.</p>
+        </article>
+        <article class="feat" data-tint="mint">
+          <h3>보관함과 복구</h3>
+          <p>삭제해도 30일간 보관함에서 복구. 작성자·소유자·관리자는 보존 기간과 무관하게 언제든 영구 삭제할 수 있습니다.</p>
+        </article>
+        <article class="feat" data-tint="violet">
+          <h3>댓글 · 반응 · 멘션</h3>
+          <p>답글 트리, 이모지 반응, 내부 사용자 멘션. SSE 기반 보드 이벤트로 새로고침 없이 반영됩니다.</p>
+        </article>
+        <article class="feat" data-tint="coral">
+          <h3>첨부파일과 링크</h3>
+          <p>스트리밍 업로드, 이미지 자동 WebP 변환·썸네일, Range 다운로드, 매직바이트 검증으로 위조된 파일 형식 차단.</p>
+        </article>
+        <article class="feat" data-tint="rose">
+          <h3>세분화된 패드 설정</h3>
+          <p>기본 정보 · 공개 범위 · 외형 · 게시물 필드 · 참여 및 첨부 권한 · 게시 승인/동결 · 멤버 역할까지 7개 탭.</p>
+        </article>
+        <article class="feat" data-tint="mint">
+          <h3>안전한 콘텐츠 렌더링</h3>
+          <p><code>react-markdown</code> + <code>rehype-sanitize</code>로 학생이 올린 본문을 안전하게 렌더링합니다.</p>
+        </article>
+        <article class="feat" data-tint="sky">
+          <h3>내보내기</h3>
+          <p>CSV(수식 인젝션 방어)·XLSX·첨부파일 ZIP, 인쇄용 뷰, 발표 모드.</p>
+        </article>
+        <article class="feat" data-tint="sun">
+          <h3>보안 기본기</h3>
+          <p>CSRF same-origin 검사, DB 공유형 IP·계정별 로그인 제한, 인증 이벤트 집계, PII 암호화·마스킹, CSP 등 보안 헤더.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 설치 -->
+  <section class="band band-tint" id="install">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Quickstart</span>
+        <h2 class="sec-title">5분 설치</h2>
+        <p class="sec-lede">Node.js 20+와 PostgreSQL 14+가 필요합니다. Node·PostgreSQL을 처음 써본다면 README의 8단계 안내를 그대로 따라가세요.</p>
+      </div>
+
+      <ol class="step-list">
+        <li class="step">
+          <div>
+            <h3>내려받고 패키지 설치</h3>
+            <div class="code">
+              <pre><code>git clone https://github.com/fecu89/pyxpad.git
+cd pyxpad
+npm install</code></pre>
+              <button class="code-copy" type="button">복사</button>
+            </div>
+          </div>
+        </li>
+        <li class="step">
+          <div>
+            <h3>PostgreSQL 준비</h3>
+            <p>Docker가 있다면 한 줄로 끝납니다. Supabase·Neon 같은 클라우드 DB를 써도 됩니다.</p>
+            <div class="code">
+              <pre><code>docker run --name pyxpad-postgres \
+  -e POSTGRES_USER=pyxpad -e POSTGRES_PASSWORD=pyxpad \
+  -e POSTGRES_DB=pyxpad -p 5432:5432 -d postgres:16</code></pre>
+              <button class="code-copy" type="button">복사</button>
+            </div>
+          </div>
+        </li>
+        <li class="step">
+          <div>
+            <h3>환경 변수 채우기</h3>
+            <p><code>.env.example</code>을 <code>.env.local</code>로 복사한 뒤 <code>DATABASE_URL</code>·<code>AUTH_SECRET</code>·PII 키를 채웁니다. 각 항목 설명은 <a href="https://github.com/fecu89/pyxpad#5-환경-변수envlocal-만들기">README의 환경 변수 표</a>에 있습니다.</p>
+            <div class="code">
+              <pre><code>cp .env.example .env.local
+openssl rand -base64 32   <span class="cmt"># AUTH_SECRET·PII 키 만들 때</span></code></pre>
+              <button class="code-copy" type="button">복사</button>
+            </div>
+          </div>
+        </li>
+        <li class="step">
+          <div>
+            <h3>스키마 적용하고 실행</h3>
+            <p>시드는 데모 학교와 <code>teacher@pyxpad.demo</code>·<code>student@pyxpad.demo</code> 계정을 만듭니다.</p>
+            <div class="code">
+              <pre><code>npm run db:migrate
+npm run db:seed
+npm run dev               <span class="cmt"># http://localhost:3001</span></code></pre>
+              <button class="code-copy" type="button">복사</button>
+            </div>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 기술 · 문서 -->
+  <section class="band" id="stack">
+    <div class="wrap split">
+      <div>
+        <div class="sec-head">
+          <span class="eyebrow">Stack</span>
+          <h2 class="sec-title">무엇으로 만들었나</h2>
+        </div>
+        <dl class="stack">
+          <div class="stack-row"><dt>Framework</dt><dd>Next.js 16 (App Router) · React 19 · TypeScript</dd></div>
+          <div class="stack-row"><dt>Database</dt><dd>PostgreSQL · Prisma ORM</dd></div>
+          <div class="stack-row"><dt>Auth</dt><dd>NextAuth · Credentials + 카카오 OAuth · scrypt</dd></div>
+          <div class="stack-row"><dt>Drag &amp; Drop</dt><dd>@dnd-kit</dd></div>
+          <div class="stack-row"><dt>Styling</dt><dd>Tailwind CSS 4 · CSS Modules</dd></div>
+          <div class="stack-row"><dt>Content</dt><dd>react-markdown · rehype-sanitize</dd></div>
+          <div class="stack-row"><dt>Files</dt><dd>busboy · sharp · file-type</dd></div>
+          <div class="stack-row"><dt>Export</dt><dd>exceljs · archiver</dd></div>
+        </dl>
+      </div>
+
+      <div>
+        <div class="sec-head">
+          <span class="eyebrow">Docs</span>
+          <h2 class="sec-title">문서 지도</h2>
+        </div>
+        <ul class="doc-list">
+          <li><a class="doc" href="https://github.com/fecu89/pyxpad#readme"><span class="doc-name">README.md</span><span class="doc-desc">설치 8단계와 스크린샷 안내</span></a></li>
+          <li><a class="doc" href="https://github.com/fecu89/pyxpad/blob/main/structure.md"><span class="doc-name">structure.md</span><span class="doc-desc">화면 · API · 서버 모듈 연결도</span></a></li>
+          <li><a class="doc" href="https://github.com/fecu89/pyxpad/blob/main/overview.md"><span class="doc-name">overview.md</span><span class="doc-desc">프로젝트 전체 개요</span></a></li>
+          <li><a class="doc" href="https://github.com/fecu89/pyxpad/blob/main/prisma/schema.prisma"><span class="doc-name">schema.prisma</span><span class="doc-desc">데이터 모델</span></a></li>
+          <li><a class="doc" href="https://github.com/fecu89/pyxpad/tree/main/scripts"><span class="doc-name">scripts/</span><span class="doc-desc">verify:* 검증 명령 모음</span></a></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <span>PyxPad · MIT License · © 2026 fecu89</span>
+    <nav class="foot-links" aria-label="바로가기">
+      <a href="https://github.com/fecu89/pyxpad">GitHub</a>
+      <a href="https://github.com/fecu89/pyxpad/issues">이슈</a>
+      <a href="#top">맨 위로</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ── 테마 ────────────────────────────────────────────── */
+  /* 초기 테마는 <head>에서 이미 정해졌습니다. 여기서는 토글과 시스템 설정 변화만 다룹니다. */
+  const root = document.documentElement;
+  const toggle = document.getElementById('theme-toggle');
+  const prefersDark = matchMedia('(prefers-color-scheme: dark)');
+
+  const paint = (mode) => {
+    root.dataset.theme = mode;
+    toggle.setAttribute('aria-label', mode === 'dark' ? '밝은 화면으로 바꾸기' : '어두운 화면으로 바꾸기');
+  };
+  paint(root.dataset.theme);
+  prefersDark.addEventListener('change', (e) => {
+    if (!localStorage.getItem('pyxpad-theme')) paint(e.matches ? 'dark' : 'light');
+  });
+  toggle.addEventListener('click', () => {
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('pyxpad-theme', next);
+    paint(next);
+  });
+
+  /* ── 코드 복사 ───────────────────────────────────────── */
+  document.querySelectorAll('.code-copy').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const code = btn.previousElementSibling.innerText;
+      try {
+        await navigator.clipboard.writeText(code);
+        btn.textContent = '복사됨';
+      } catch {
+        btn.textContent = '실패';
+      }
+      setTimeout(() => { btn.textContent = '복사'; }, 1400);
+    });
+  });
+
+  /* ── 드래그 정렬 ─────────────────────────────────────────
+     앱과 같은 활성화 규칙: 마우스는 4px 이동, 터치는 150ms 유지.
+     그래야 터치에서 보드를 세로로 스크롤하는 동작과 섞이지 않습니다. */
+  const pad = document.getElementById('pad');
+  if (!pad) return;
+
+  const live = document.getElementById('pad-live');
+  const lists = () => [...pad.querySelectorAll('[data-list]')];
+  const say = (msg) => { live.textContent = msg; };
+
+  const recount = () => {
+    pad.querySelectorAll('[data-section]').forEach((s) => {
+      s.querySelector('[data-count]').textContent = s.querySelectorAll('.pad-card').length;
+    });
+  };
+
+  const listName = (list) => list.closest('[data-section]').getAttribute('aria-label');
+
+  let drag = null;   // 포인터 드래그 상태
+  let armed = null;  // 활성화 대기 상태
+
+  const nearestList = (x, y) => {
+    let best = null, bestDist = Infinity;
+    for (const list of lists()) {
+      const r = list.getBoundingClientRect();
+      const dx = Math.max(r.left - x, 0, x - r.right);
+      const dy = Math.max(r.top - y, 0, y - r.bottom);
+      const d = dx * dx + dy * dy;
+      if (d < bestDist) { bestDist = d; best = list; }
+    }
+    return best;
+  };
+
+  const placeHolder = (list, y) => {
+    const siblings = [...list.querySelectorAll('.pad-card:not(.is-src)')];
+    let before = null;
+    for (const el of siblings) {
+      const r = el.getBoundingClientRect();
+      if (y < r.top + r.height / 2) { before = el; break; }
+    }
+    list.insertBefore(drag.ph, before);
+    lists().forEach((l) => l.closest('[data-section]').classList.toggle('is-target', l === list));
+  };
+
+  const begin = (card, x, y) => {
+    const rect = card.getBoundingClientRect();
+    const ghost = card.cloneNode(true);
+    ghost.classList.add('pad-ghost');
+    ghost.querySelectorAll('button').forEach((b) => b.setAttribute('tabindex', '-1'));
+    ghost.style.width = rect.width + 'px';
+    ghost.style.left = rect.left + 'px';
+    ghost.style.top = rect.top + 'px';
+    document.body.appendChild(ghost);
+
+    const ph = document.createElement('li');
+    ph.className = 'pad-ph';
+    ph.style.height = rect.height + 'px';
+    card.after(ph);
+    card.classList.add('is-src');
+
+    drag = { card, ghost, ph, dx: x - rect.left, dy: y - rect.top };
+    document.body.classList.add('is-dragging');
+    say(card.dataset.title + ' 잡음');
+  };
+
+  const move = (x, y) => {
+    drag.ghost.style.left = (x - drag.dx) + 'px';
+    drag.ghost.style.top = (y - drag.dy) + 'px';
+    placeHolder(nearestList(x, y), y);
+  };
+
+  const finish = () => {
+    if (!drag) return;
+    const target = drag.ph.parentElement;
+    drag.ph.replaceWith(drag.card);
+    drag.card.classList.remove('is-src');
+    drag.ghost.remove();
+    document.body.classList.remove('is-dragging');
+    pad.querySelectorAll('[data-section]').forEach((s) => s.classList.remove('is-target'));
+    recount();
+    say(drag.card.dataset.title + ' — ' + listName(target) + '에 놓음');
+    drag = null;
+  };
+
+  const cancelArm = () => {
+    if (!armed) return;
+    clearTimeout(armed.timer);
+    armed = null;
+  };
+
+  pad.addEventListener('pointerdown', (ev) => {
+    if (ev.button !== 0) return;
+    const card = ev.target.closest('.pad-card');
+    if (!card || drag) return;
+    const onGrip = !!ev.target.closest('.pad-grip');
+    // 터치·펜은 손잡이에서만 시작합니다. 카드 본문을 눌렀을 때는 페이지가 정상 스크롤돼야 합니다.
+    if (ev.pointerType !== 'mouse' && !onGrip) return;
+
+    armed = { card, x: ev.clientX, y: ev.clientY, pointerId: ev.pointerId, timer: 0 };
+    if (ev.pointerType !== 'mouse') {
+      armed.timer = setTimeout(() => {
+        if (armed) { begin(armed.card, armed.x, armed.y); armed = null; }
+      }, 150);
+    }
+    if (onGrip) ev.preventDefault();
+  });
+
+  window.addEventListener('pointermove', (ev) => {
+    if (drag) { ev.preventDefault(); move(ev.clientX, ev.clientY); return; }
+    if (!armed || ev.pointerId !== armed.pointerId) return;
+    const moved = Math.hypot(ev.clientX - armed.x, ev.clientY - armed.y);
+    if (ev.pointerType === 'mouse') {
+      if (moved > 4) { begin(armed.card, ev.clientX, ev.clientY); armed = null; }
+    } else if (moved > 12) {
+      cancelArm(); // 꾹 누르기 전에 움직였으면 스크롤로 넘깁니다.
+    }
+  }, { passive: false });
+
+  window.addEventListener('pointerup', () => { cancelArm(); finish(); });
+  window.addEventListener('pointercancel', () => { cancelArm(); if (drag) finish(); });
+
+  /* ── 키보드 조작: 손잡이에서 스페이스로 잡고 방향키로 이동 ── */
+  let held = null;
+
+  const release = (msg) => {
+    if (!held) return;
+    held.classList.remove('is-held');
+    say(msg);
+    held = null;
+  };
+
+  pad.addEventListener('keydown', (ev) => {
+    const grip = ev.target.closest('.pad-grip');
+    if (!grip) return;
+    const card = grip.closest('.pad-card');
+
+    if (ev.key === ' ' || ev.key === 'Enter') {
+      ev.preventDefault();
+      if (held === card) {
+        release(card.dataset.title + ' — ' + listName(card.parentElement) + '에 놓음');
+      } else {
+        release('');
+        held = card;
+        card.classList.add('is-held');
+        say(card.dataset.title + ' 잡음. 방향키로 옮기고 스페이스로 놓으세요.');
+      }
+      return;
+    }
+
+    if (ev.key === 'Escape') { ev.preventDefault(); release('취소'); return; }
+    if (held !== card) return;
+
+    const list = card.parentElement;
+    const all = lists();
+    let moved = false;
+
+    if (ev.key === 'ArrowUp') {
+      const prev = card.previousElementSibling;
+      if (prev) { list.insertBefore(card, prev); moved = true; }
+    } else if (ev.key === 'ArrowDown') {
+      const next = card.nextElementSibling;
+      if (next) { list.insertBefore(next, card); moved = true; }
+    } else if (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight') {
+      const idx = all.indexOf(list);
+      const to = all[idx + (ev.key === 'ArrowLeft' ? -1 : 1)];
+      if (to) { to.appendChild(card); moved = true; }
+    }
+
+    if (!moved) return;
+    ev.preventDefault();
+    recount();
+    grip.focus();
+    const pos = [...card.parentElement.children].indexOf(card) + 1;
+    say(listName(card.parentElement) + ' ' + pos + '번째');
+  });
+
+  recount();
+})();
+</script>
+
+</body>
+</html>

@@ -6,6 +6,8 @@
 
 Next.js (App Router) · PostgreSQL · Prisma · dnd-kit로 만들었습니다.
 
+[**프로젝트 소개 페이지 →**](https://fecu89.github.io/pyxpad/)
+
 </div>
 
 ---
